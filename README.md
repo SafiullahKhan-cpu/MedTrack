@@ -1887,7 +1887,7 @@ const PROMPTS = {
   research:(t)=>`Latest research and clinical guidelines on "${t}".\n\nInclude:\n• Landmark studies\n• Current guidelines (WHO, NICE, AHA)\n• Recent advances\n• Clinical pearls`,
   recall:(t)=>`Give me 20 active recall questions on "${t}" (no answers).\n\nProgress from:\n• Basic recall → Application → Analysis\n• Include clinical mini-scenarios`,
   teach:(t)=>`Teach "${t}" to a first-year MBBS student.\n\nUse:\n• Simple analogies\n• Step-by-step logic\n• Clinical scenarios\n• Top 5 must-remember points`,
-  htmlStudyFile:(t)=>`Create a COMPLETE SINGLE-FILE HTML study page for MBBS topic: "${t}"\nALL CSS and JS MUST be inline. Dark medical theme: bg #070D1A, accent #00D2BE.\nInclude a sticky tab bar with 6 tabs:\nTAB 1 — 📖 RESEARCH & GUIDELINES\nTAB 2 — 📝 MCQ QUIZ\nTAB 3 — 🏥 CLINICAL CORRELATES\nTAB 4 — 🗣️ TEACHING MODE\nTAB 5 — 🧠 MEMORY & MNEMONICS\nTAB 6 — 📄 SEQs`
+  htmlStudyFile:(t)=>`You are an advanced Medical AI integrated into a structured system called "MedTrack Pro".\n\nGenerate a COMPLETE INTERACTIVE HTML STUDY FILE for the topic: "${t}"\n\nYou MUST follow TWO CORE PROTOCOLS:\n1. FIKRI LEARNING SYSTEM (for content structure)\n2. SCHEDULE INTELLIGENCE SYSTEM (for daily execution)\n\n━━━━━━━━━━━━━━━━━━━━━━━\n🔶 PART 1: FIKRI SYSTEM (MANDATORY CORE)\n━━━━━━━━━━━━━━━━━━━━━━━\n\nStructure the topic into this deep intellectual framework:\n\n1. Conceptual Foundation → What is it? Why does it exist?\n2. Mechanism / Pathophysiology → Step-by-step causal chain (clear + layered)\n3. System Integration → Link with other body systems\n4. Clinical Lens → Symptoms, signs, real patient framing\n5. Diagnostic Thinking → How a doctor approaches this logically\n6. Management Logic → WHY treatments work (not just lists)\n7. Exam Intelligence → High-yield traps, patterns, frequently tested ideas\n8. Deep Fikri Links → Conceptual connections (ربط فکری)\n\nRULES: No shallow bullet dumping. Build understanding step-by-step. Feel like a thinking system, not notes.\n\n━━━━━━━━━━━━━━━━━━━━━━━\n🔶 PART 2: INTERACTIVE HTML OUTPUT\n━━━━━━━━━━━━━━━━━━━━━━━\n\nGenerate a COMPLETE SINGLE HTML FILE with:\n• Inline CSS + JS only — NO external dependencies\n• Dark modern UI (bg #070D1A, accent #00D2BE)\n• ALL content must be complete — no placeholder text\n\nTABS (must include all 7):\n1. 🧠 Fikri Breakdown — full structured analysis using the 8-point framework above\n2. 📋 Quick Notes — high-yield condensed revision points\n3. ❓ MCQs — 10 clinically relevant multiple choice questions with answers + explanations\n4. 🔁 Active Recall — 10 open-ended questions for self-testing (click to reveal answer)\n5. 🏥 Clinical Cases — 2 realistic patient vignettes with diagnostic reasoning\n6. 📅 Revision Plan — spaced repetition schedule (Day 1 / 3 / 7 / 14 / 30)\n7. 🗓️ Schedule — full daily study schedule (see Part 3)\n\nUI REQUIREMENTS:\n• Collapsible sections with smooth expand/collapse\n• Card-based layout with clean typography\n• Progress tracking within MCQ tab (score counter)\n• Active Recall flip-card style (click to reveal)\n\n━━━━━━━━━━━━━━━━━━━━━━━\n🔶 PART 3: SCHEDULE INTELLIGENCE SYSTEM\n━━━━━━━━━━━━━━━━━━━━━━━\n\nIn the Schedule tab, generate a FULL DAILY STUDY PLAN in diary style (NOT a table):\n\n📅 For each day include:\n• Gregorian Date + Hijri Date (MANDATORY)\n• Day Theme (a meaningful intellectual title)\n\nEach time block MUST include:\n• Time range (e.g. 08:00–09:30)\n• Topic + subtopic\n• Action Type: Learn / Revise / Active Recall / Test (MCQs)\n• Specific Task (clear, actionable)\n• Tags (#system #clinical #concept)\n• Depth: Light / Moderate / Deep\n\nINTELLIGENCE RULES:\n• Balance New Learning, Revision, and Active Recall across the day\n• Include short breaks (10–15 min) between each session\n• Keep workload realistic (max 6–7 study hours per day)\n• Prioritize high-yield and clinically tested subtopics\n• Avoid overplanning and repetitive tasks\n\n━━━━━━━━━━━━━━━━━━━━━━━\n🔶 PART 4: REFLECTION + PROGRESS (end of Schedule tab)\n━━━━━━━━━━━━━━━━━━━━━━━\n\n📌 Reflection:\n• What was deeply understood\n• What remains weak\n• 1 key fikri insight\n\n📊 Progress:\n• Completion estimate (%)\n• Effort rating (1–5 stars)\n• Consistency note\n\n━━━━━━━━━━━━━━━━━━━━━━━\n🔶 FINAL OUTPUT RULE\n━━━━━━━━━━━━━━━━━━━━━━━\n\nYour response MUST be a COMPLETE HTML FILE — ready to open in a browser — fully styled and interactive. Do NOT add any explanation outside the HTML.`
 };
 
 // ─────────────────────────────────────────────
@@ -2656,7 +2656,7 @@ function buildTopicBody(topic) {
     <span style="font-size:26px">✨</span>
     <div>
       <div class="prompt-btn-title">Generate Full Study File <span class="copy-indicator" id="ci-${topic.id}-htmlStudyFile">✓ Copied!</span></div>
-      <div class="prompt-btn-sub">Creates a complete interactive HTML study page → paste into AI</div>
+      <div class="prompt-btn-sub">FIKRI system: 7 tabs · MCQs · Cases · Schedule · Recall → paste into AI</div>
     </div>
   </button>`;
 
@@ -3617,41 +3617,60 @@ function updateNavAuth(user) {
 // ─────────────────────────────────────────────
 //  DAILY SCHEDULE
 // ─────────────────────────────────────────────
-const SCHEDULE_AI_PROMPT = `You are a medical study schedule generator. I will give you my timetable/topics for today and you will produce a JSON file I can load into my MedTrack study app.
+const SCHEDULE_AI_PROMPT = `You are an advanced Medical AI integrated into MedTrack Pro — a structured study command center.
+
+Your task is to generate a DAILY STUDY SCHEDULE following the SCHEDULE INTELLIGENCE SYSTEM below.
 
 OUTPUT ONLY valid JSON — no markdown, no explanation, no backticks. Strictly follow this schema:
 
 {
   "date": "YYYY-MM-DD",
-  "dayTitle": "Short title e.g. MSK Week 2 — Day 3",
+  "hijriDate": "e.g. 15 Dhul Hijjah 1446",
+  "dayTitle": "Meaningful intellectual title e.g. Renal Week — Day 2: Filtration & Function",
   "schedule": [
     {
-      "id": "unique-id-1",
+      "id": "unique-slug-id",
       "time": "08:00 - 09:30",
-      "subject": "Anatomy",
-      "topic": "Rotator Cuff Muscles",
-      "type": "lecture",
-      "emoji": "🦴",
-      "tags": ["MSK", "shoulder", "high-yield"],
-      "difficulty": "medium",
-      "weightage": 3,
-      "notes": "Focus on attachments and innervation"
+      "subject": "Physiology",
+      "topic": "GFR and Filtration Barrier",
+      "type": "learn",
+      "action": "Learn + Mechanism Mapping",
+      "task": "Understand filtration barrier layers and draw the GFR flow diagram",
+      "emoji": "🧬",
+      "tags": ["physiology", "renal", "core"],
+      "difficulty": "deep",
+      "weightage": 4,
+      "notes": "Focus on podocyte role and Starling forces"
     }
-  ]
+  ],
+  "reflection": {
+    "understood": "What was deeply understood today",
+    "weak": "What remains weak or needs review",
+    "fikriInsight": "One key conceptual connection discovered today"
+  },
+  "progress": {
+    "completionEstimate": 80,
+    "effortRating": 4,
+    "consistencyNote": "Strong focus session — maintained depth throughout"
+  }
 }
 
-Rules:
-- "date" must be today's date in YYYY-MM-DD format
-- "subject" must match one of my existing subject folder names if possible
-- "type" can be: lecture, reading, revision, mcq, notes, lab, clinical
-- "difficulty" must be: easy, medium, or hard
-- "weightage" is 1-5
-- "tags" are short lowercase strings
-- "emoji" pick an appropriate one for the subject/topic
-- Keep "id" values unique (use slug format like "anatomy-rotator-cuff")
+INTELLIGENCE RULES (MANDATORY):
+- "type" must be one of: learn, revise, active-recall, mcq, clinical, break
+- "difficulty" must be: light, moderate, or deep
+- "weightage" is 1–5 (importance/yield)
+- "tags" are short lowercase strings (3–5 tags per session)
+- "id" must be unique slug format (e.g. "physiology-gfr-learn")
+- "hijriDate" MUST be included — calculate from the date field
+- "dayTitle" must be a meaningful intellectual theme (not generic)
+- Balance: include New Learning + Revision + Active Recall sessions
+- Include break slots (10–15 min) between study sessions
+- Keep total study time realistic (max 6–7 hours/day)
+- Prioritize high-yield and clinically tested subtopics
+- The "reflection" and "progress" fields are MANDATORY
 
-My timetable for today:
-[PASTE YOUR TIMETABLE / TOPICS HERE]`;
+My timetable/topics for today:
+[PASTE YOUR TIMETABLE / TOPICS HERE]`
 
 let pendingScheduleData = null;
 
