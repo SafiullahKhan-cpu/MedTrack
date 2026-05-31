@@ -1206,6 +1206,78 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
    MEDICAL DIARY VIEW — v4
 ═══════════════════════════════════════════════════════ */
 
+/* ── DIARY REVISION SECTION ── */
+.dv-rev-section-hdr{
+  display:flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,rgba(0,210,190,0.08),rgba(58,134,255,0.05));
+  border:1px solid rgba(0,210,190,0.25);border-radius:var(--r);
+  padding:11px 14px;margin-bottom:10px;
+}
+.dv-rev-section-icon{font-size:20px;flex-shrink:0}
+.dv-rev-section-title{font-family:var(--font-head);font-size:13px;font-weight:800;color:var(--primary)}
+.dv-rev-section-sub{font-size:11px;color:var(--text-muted);margin-top:1px}
+.dv-rev-count-badge{
+  margin-left:auto;font-family:var(--font-mono);font-size:12px;font-weight:700;
+  background:var(--primary-dim);border:1px solid rgba(0,210,190,0.3);
+  color:var(--primary);border-radius:20px;padding:3px 10px;flex-shrink:0;
+}
+/* Revision topic row */
+.dv-rev-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:var(--r-sm);
+  background:var(--surface);border:1px solid var(--border2);
+  margin-bottom:6px;cursor:pointer;transition:all .2s;
+}
+.dv-rev-row:hover{border-color:rgba(0,210,190,0.3);background:rgba(0,210,190,0.03)}
+.dv-rev-row.rev-done{opacity:.55;background:rgba(6,255,165,0.04);border-color:rgba(6,255,165,0.2)}
+.dv-rev-cb{
+  width:22px;height:22px;border-radius:6px;
+  border:2px solid var(--border2);background:var(--surface2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex-shrink:0;transition:all .2s;cursor:pointer;
+}
+.dv-rev-row.rev-done .dv-rev-cb{background:var(--green);border-color:var(--green);color:#000;box-shadow:0 0 8px rgba(6,255,165,0.3)}
+.dv-rev-row:not(.rev-done) .dv-rev-cb:hover{border-color:var(--primary)}
+.dv-rev-info{flex:1;min-width:0}
+.dv-rev-name{font-family:var(--font-head);font-size:13px;font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dv-rev-row.rev-done .dv-rev-name{text-decoration:line-through;color:var(--text-muted)}
+.dv-rev-meta{font-size:10px;color:var(--text-muted);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
+.dv-rev-pills{display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;align-items:center}
+.dv-rev-pill{
+  font-size:9px;padding:2px 7px;border-radius:10px;
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text-muted);
+  white-space:nowrap;
+}
+.dv-rev-pill.overdue{background:var(--red-dim);border-color:rgba(255,71,87,.3);color:var(--red)}
+.dv-rev-pill.due-today{background:var(--yellow-dim);border-color:rgba(255,179,64,.3);color:var(--yellow)}
+.dv-rev-pill.subj{background:var(--blue-dim);border-color:rgba(58,134,255,.2);color:var(--blue)}
+.dv-rev-conf{
+  display:flex;gap:4px;flex-shrink:0;
+}
+.dv-rev-conf-btn{
+  font-size:11px;padding:4px 8px;border-radius:var(--r-sm);
+  border:1px solid var(--border2);background:var(--surface2);
+  color:var(--text-muted);cursor:pointer;transition:all .2s;
+  font-family:var(--font-body);font-weight:600;
+}
+.dv-rev-conf-btn:hover{transform:translateY(-1px)}
+.dv-rcb-bad{border-color:rgba(255,71,87,.4)!important;color:var(--red)!important;background:var(--red-dim)!important}
+.dv-rcb-ok{border-color:rgba(255,179,64,.4)!important;color:var(--yellow)!important;background:var(--yellow-dim)!important}
+.dv-rcb-good{border-color:rgba(0,210,190,.4)!important;color:var(--primary)!important;background:var(--primary-dim)!important}
+.dv-rcb-easy{border-color:rgba(6,255,165,.4)!important;color:var(--green)!important;background:var(--green-dim)!important}
+/* Revision summary sidebar chip */
+.dv-rev-sum-chip{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;border-radius:var(--r-sm);
+  background:var(--surface2);border:1px solid var(--border2);
+  margin-bottom:5px;font-size:12px;cursor:pointer;transition:all .15s;
+}
+.dv-rev-sum-chip:hover{border-color:var(--primary);background:var(--primary-dim)}
+.dv-rev-sum-chip.sum-done{opacity:.6;background:rgba(6,255,165,0.05);border-color:rgba(6,255,165,.2)}
+.dv-rev-sum-pct{font-family:var(--font-mono);font-size:11px;margin-left:auto;color:var(--primary)}
+.dv-rev-sum-done-pct{font-family:var(--font-mono);font-size:11px;margin-left:auto;color:var(--green)}
+
 /* ── DIARY HEADER ── */
 .diary-view-hdr{
   display:flex;align-items:center;justify-content:space-between;
@@ -1245,6 +1317,9 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
 .dv-day-chip.today{border-color:var(--primary);color:var(--primary);background:var(--primary-dim)}
 .dv-day-chip.selected{background:var(--primary);color:#000;border-color:var(--primary);font-weight:700}
 .dv-day-chip.has-tasks::after{content:'';display:block;width:4px;height:4px;border-radius:50%;background:var(--green);margin:3px auto 0}
+.dv-day-chip.has-revisions::before{content:'🔁';display:block;font-size:9px;line-height:1;margin-bottom:1px}
+/* Revised due chip */
+.dv-due-chip.revised{opacity:.65;background:rgba(6,255,165,0.04);border-color:rgba(6,255,165,.2)}
 
 /* ── QUOTE BAR ── */
 .diary-quote-bar{
@@ -1858,6 +1933,19 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
       <!-- MASTER AI PROMPT BAR -->
       <div id="dv-mega-bar"></div>
 
+      <!-- ═══ REVISION TOPICS SECTION ═══ -->
+      <div id="dv-revision-section" style="display:none;margin-bottom:18px;position:relative;z-index:1;">
+        <div class="dv-rev-section-hdr">
+          <span class="dv-rev-section-icon">🔁</span>
+          <div>
+            <div class="dv-rev-section-title">Revision Due Today</div>
+            <div class="dv-rev-section-sub" id="dv-rev-section-sub">Topics scheduled for spaced repetition</div>
+          </div>
+          <span class="dv-rev-count-badge" id="dv-rev-count-badge">0</span>
+        </div>
+        <div id="dv-revision-list"></div>
+      </div>
+
       <!-- Timeline -->
       <div class="dv-timeline" id="dv-timeline">
         <div class="dv-empty-state" id="dv-empty-state">
@@ -1925,6 +2013,14 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
           <div class="dv-ref-label">📅 Tomorrow's priorities</div>
           <textarea class="ref-input" id="dv-tomorrow" rows="2"
             placeholder="Top 3 focus areas..." oninput="dvSaveReflection()"></textarea>
+        </div>
+      </div>
+
+      <!-- REVISION PROGRESS CARD -->
+      <div class="dsb-card" id="dv-rev-summary-card" style="border-color:rgba(0,210,190,0.25);background:linear-gradient(135deg,rgba(0,210,190,0.04),rgba(58,134,255,0.03))">
+        <div class="dsb-card-title" style="color:var(--primary)">🔁 Today's Revision</div>
+        <div id="dv-rev-summary-inner">
+          <div style="font-size:12px;color:var(--text-muted)">No revisions due today</div>
         </div>
       </div>
 
@@ -2442,7 +2538,8 @@ var state={
   studyTimer:{todayElapsed:0,weeklyData:[0,0,0,0,0,0,0],totalElapsed:0,lastDate:null},
   heatmap:{},reminders:[],whyStarted:'',islamicOn:false,
   plannerTasks:[],revisionSession:{active:false},weeklyStudied:{},
-  dailySchedule:{date:null,dayTitle:'',items:[],completedIds:[],microChecks:{}}
+  dailySchedule:{date:null,dayTitle:'',items:[],completedIds:[],microChecks:{}},
+  diaryRevised:{}
 };
 
 function patchTree(folders,parentId){
@@ -2492,6 +2589,7 @@ function loadState(){
     state.plannerTasks=state.plannerTasks||[]; state.weeklyStudied=state.weeklyStudied||{};
     state.dailySchedule=state.dailySchedule||{date:null,dayTitle:'',items:[],completedIds:[],microChecks:{}};
     state.dailySchedule.microChecks=state.dailySchedule.microChecks||{};
+    state.diaryRevised=state.diaryRevised||{};
     patchTree(state.folders);
   }catch(e){console.error('Load failed',e);}
 }
@@ -4151,6 +4249,7 @@ function dvRenderView() {
   dvRenderQuote();
   dvRenderTimeline();
   dvRenderSidebar();
+  dvRenderRevisionSection();
 }
 
 function dvRenderDateLabel() {
@@ -4191,7 +4290,9 @@ function dvRenderWeekRibbon() {
     var isSelected = d === dvCurrentDate;
     var dayData = state.v4Diary && state.v4Diary[d];
     var hasTasks = dayData && dayData.tasks && dayData.tasks.length > 0;
-    var cls = 'dv-day-chip' + (isToday ? ' today' : '') + (isSelected ? ' selected' : '') + (hasTasks ? ' has-tasks' : '');
+    var revisedMap = state.diaryRevised && state.diaryRevised[d];
+    var hasRevisions = revisedMap && Object.keys(revisedMap).length > 0;
+    var cls = 'dv-day-chip' + (isToday ? ' today' : '') + (isSelected ? ' selected' : '') + (hasTasks ? ' has-tasks' : '') + (hasRevisions ? ' has-revisions' : '');
     return '<div class="' + cls + '" onclick="dvGoDate(\'' + d + '\')">' +
       '<div style="font-size:10px">' + dn + '</div>' +
       '<div style="font-size:13px;font-weight:700">' + dm + '</div>' +
@@ -4254,6 +4355,8 @@ function dvRenderTimeline() {
 
   // Render mega prompt bar
   try { dvRenderMegaBar(); } catch(e) {}
+  // Render revision section (due topics with checkboxes)
+  try { dvRenderRevisionSection(); } catch(e) {}
 }
 
 function dvGetMergedTasks(dateStr) {
@@ -4633,6 +4736,7 @@ function dvRenderSidebar() {
   dvRenderReflectionInputs();
   dvRenderSyncedTopics();
   dvRenderDueTopics();
+  dvRenderRevisionSummary();
 }
 
 function dvRenderDayStats() {
@@ -4715,14 +4819,18 @@ function dvRenderSyncedTopics() {
 function dvRenderDueTopics() {
   var el = document.getElementById('dv-due-topics');
   if (!el) return;
+  var isToday = (dvCurrentDate === todayStr());
   var due = getDueTopics().slice(0, 6);
+  var revisedMap = dvGetDiaryRevised(dvCurrentDate);
   if (!due.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">✅ Nothing due today</div>'; return; }
   el.innerHTML = due.map(function(x) {
     var t = x.topic;
-    return '<div class="dv-due-chip" onclick="dvAddDueTopicTask(\'' + t.id + '\')">' +
-      '<span>🔔</span>' +
-      '<span style="flex:1;font-size:11px">' + t.name.slice(0,22) + '</span>' +
-      '<span style="font-size:10px;color:var(--primary)" title="Add to today">+ Add</span>' +
+    var isRevised = !!revisedMap[t.id];
+    return '<div class="dv-due-chip' + (isRevised ? ' revised' : '') + '" ' +
+      'onclick="(function(){var sec=document.getElementById(\'dv-revision-section\');if(sec)sec.scrollIntoView({behavior:\'smooth\',block:\'start\'});var row=document.getElementById(\'dvrev-' + t.id + '\');if(row)setTimeout(function(){row.scrollIntoView({behavior:\'smooth\',block:\'center\'});row.classList.add(\'synced-flash\');setTimeout(function(){row.classList.remove(\'synced-flash\');},700);},300);})()">' +
+      '<span>' + (isRevised ? '✅' : '🔔') + '</span>' +
+      '<span style="flex:1;font-size:11px' + (isRevised ? ';text-decoration:line-through;color:var(--text-muted)' : '') + '">' + t.name.slice(0,22) + '</span>' +
+      (isRevised ? '<span style="font-size:10px;color:var(--green)">Done</span>' : '<span style="font-size:10px;color:var(--primary)" title="Scroll to revision">↓ Revise</span>') +
     '</div>';
   }).join('');
 }
@@ -4751,6 +4859,266 @@ function dvAddDueTopicTask(topicId) {
   dvRenderTimeline();
   dvRenderSidebar();
   showToast('📋 "' + r.topic.name + '" added to diary!', 'success');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  REVISION CYCLE ↔ DIARY INTEGRATION
+// ═══════════════════════════════════════════════════════════════
+
+// State: track which topics have been revised in the diary for a given date
+// Stored as state.diaryRevised[dateStr] = { topicId: { score, ts } }
+
+function dvGetDiaryRevised(dateStr) {
+  state.diaryRevised = state.diaryRevised || {};
+  state.diaryRevised[dateStr] = state.diaryRevised[dateStr] || {};
+  return state.diaryRevised[dateStr];
+}
+
+/**
+ * Render the "Revision Due Today" section inside the diary notebook.
+ * Shows ALL topics due for spaced repetition on dvCurrentDate.
+ * Checked topics count as revised → update heatmap, streak, SM-2 interval.
+ */
+function dvRenderRevisionSection() {
+  var sec = document.getElementById('dv-revision-section');
+  var listEl = document.getElementById('dv-revision-list');
+  var badge = document.getElementById('dv-rev-count-badge');
+  var sub = document.getElementById('dv-rev-section-sub');
+  if (!sec || !listEl) return;
+
+  // For today's date show due topics; for past dates show what was revised
+  var today = todayStr();
+  var isToday = (dvCurrentDate === today);
+  var due;
+  if (isToday) {
+    due = getDueTopics();
+  } else {
+    // For past dates: show topics that were revised on that date
+    var revisedMap = dvGetDiaryRevised(dvCurrentDate);
+    var revisedIds = Object.keys(revisedMap);
+    if (!revisedIds.length) { sec.style.display = 'none'; return; }
+    var allT = getAllTopics();
+    var rset = new Set(revisedIds);
+    due = allT.filter(function(x) { return rset.has(x.topic.id); });
+  }
+
+  if (!due.length) {
+    sec.style.display = 'none';
+    return;
+  }
+
+  sec.style.display = '';
+  if (badge) badge.textContent = due.length;
+
+  var revisedMap = dvGetDiaryRevised(dvCurrentDate);
+  var revisedCount = Object.keys(revisedMap).length;
+
+  if (sub) {
+    if (isToday) {
+      sub.textContent = revisedCount + ' of ' + due.length + ' revised · tick to mark done & update streak';
+    } else {
+      sub.textContent = revisedCount + ' topic' + (revisedCount !== 1 ? 's' : '') + ' revised on this day';
+    }
+  }
+
+  listEl.innerHTML = due.map(function(x) {
+    var t = x.topic;
+    var f = x.folder;
+    var isRevised = !!revisedMap[t.id];
+    var reviewLabel = getNextReviewLabel(t);
+    var labelCls = reviewLabel ? (reviewLabel.cls === 'overdue' ? 'overdue' : reviewLabel.cls === 'today' ? 'due-today' : '') : '';
+    var pct = getTopicCompletion(t);
+    var nextInterval = calcNextInterval(t);
+
+    return '<div class="dv-rev-row' + (isRevised ? ' rev-done' : '') + '" id="dvrev-' + t.id + '">' +
+      '<div class="dv-rev-cb" onclick="dvReviseTopicCheck(\'' + t.id + '\')">' + (isRevised ? '✓' : '') + '</div>' +
+      '<div class="dv-rev-info">' +
+        '<div class="dv-rev-name">' + t.name + '</div>' +
+        '<div class="dv-rev-meta">' +
+          (f ? '<span>📁 ' + f.name.slice(0, 18) + '</span>' : '') +
+          (t.repetitions ? '<span>🔁 Rep #' + t.repetitions + '</span>' : '') +
+          (t.lastReviewDate ? '<span>Last: ' + t.lastReviewDate + '</span>' : '<span>Never revised</span>') +
+          '<span>' + pct + '% stages</span>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">' +
+        '<div class="dv-rev-pills">' +
+          (reviewLabel ? '<span class="dv-rev-pill ' + labelCls + '">' + reviewLabel.label + '</span>' : '') +
+        '</div>' +
+        // Confidence buttons (only when not yet revised)
+        (isRevised ? (revisedMap[t.id].score !== undefined ? '<span style="font-size:10px;color:var(--green);font-weight:700">Score: ' + ['Blackout','','Hard','','Good','Easy'][revisedMap[t.id].score || 4] + ' ✓</span>' : '') :
+          '<div class="dv-rev-conf">' +
+            '<button class="dv-rev-conf-btn dv-rcb-bad" onclick="event.stopPropagation();dvReviseWithScore(\'' + t.id + '\',0)" title="Blackout — reset">😵</button>' +
+            '<button class="dv-rev-conf-btn dv-rcb-ok" onclick="event.stopPropagation();dvReviseWithScore(\'' + t.id + '\',2)" title="Hard">😓</button>' +
+            '<button class="dv-rev-conf-btn dv-rcb-good" onclick="event.stopPropagation();dvReviseWithScore(\'' + t.id + '\',4)" title="Good — +' + nextInterval + 'd">👍</button>' +
+            '<button class="dv-rev-conf-btn dv-rcb-easy" onclick="event.stopPropagation();dvReviseWithScore(\'' + t.id + '\',5)" title="Easy — +' + Math.round(nextInterval * 1.2) + 'd">🚀</button>' +
+          '</div>'
+        ) +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+/**
+ * Called when user ticks the checkbox on a revision row.
+ * Uses score=4 (Good) as default confidence.
+ */
+function dvReviseTopicCheck(topicId) {
+  var revisedMap = dvGetDiaryRevised(dvCurrentDate);
+  if (revisedMap[topicId]) {
+    // Un-tick: remove from revised map (cannot undo SM-2 easily, just remove marker)
+    delete revisedMap[topicId];
+    saveState();
+    dvRenderRevisionSection();
+    dvRenderRevisionSummary();
+    dvRenderSidebar();
+    showToast('↩ Revision unmarked for "' + (findTopic(topicId) ? findTopic(topicId).topic.name : topicId) + '"', 'info');
+    return;
+  }
+  dvReviseWithScore(topicId, 4);
+}
+
+/**
+ * Apply a spaced-repetition score to a topic from the diary.
+ * Updates: SM-2 interval, heatmap, streak, diaryRevised map.
+ */
+function dvReviseWithScore(topicId, score) {
+  var r = findTopic(topicId);
+  if (!r) return;
+  var t = r.topic;
+  var today = todayStr();
+
+  // SM-2 update (same logic as v4SubmitConf)
+  var reps = t.repetitions || 0;
+  if (score < 3) {
+    t.repetitions = 0;
+    t.interval = 1;
+    if (score === 0) t.weakFlag = true;
+  } else {
+    if (score === 5) t.weakFlag = false;
+    t.repetitions = reps + 1;
+    var base = SR_INTERVALS[Math.min(t.repetitions, SR_INTERVALS.length - 1)];
+    t.interval = Math.round(base * (score === 5 ? 1.2 : 1.0));
+  }
+  t.lastReviewDate = dvCurrentDate;
+  t.nextReviewDate = addDays(dvCurrentDate, t.interval);
+
+  // Heatmap: add to the REVISED date (dvCurrentDate)
+  state.heatmap[dvCurrentDate] = (state.heatmap[dvCurrentDate] || 0) + 1;
+
+  // Weekly studied tracking
+  if (typeof trackWeeklyStudied === 'function') trackWeeklyStudied(t.id);
+
+  // Streak update (only for today)
+  if (dvCurrentDate === today) {
+    if (typeof updateStreak === 'function') updateStreak();
+  }
+
+  // Mark as revised in diary
+  state.diaryRevised = state.diaryRevised || {};
+  state.diaryRevised[dvCurrentDate] = state.diaryRevised[dvCurrentDate] || {};
+  state.diaryRevised[dvCurrentDate][topicId] = { score: score, ts: Date.now() };
+
+  saveState();
+
+  // Toast feedback
+  var scoreLabel = ['Blackout', '', 'Hard', '', 'Good', 'Easy'][score] || 'Good';
+  var msg = score === 0
+    ? '💪 Rescheduled "' + t.name + '" for tomorrow'
+    : '✅ "' + t.name + '" revised (' + scoreLabel + ') — next in ' + t.interval + 'd 🔥';
+  showToast(msg, score < 3 ? 'warn' : 'success');
+
+  // Re-render
+  dvRenderRevisionSection();
+  dvRenderRevisionSummary();
+  dvRenderSidebar();
+
+  // Refresh heatmap on home page if visible
+  try { renderHeatmap(); } catch(e) {}
+  try { renderStreakUI(); } catch(e) {}
+
+  // Flash the row
+  setTimeout(function() {
+    var el = document.getElementById('dvrev-' + topicId);
+    if (el) {
+      el.classList.add('synced-flash');
+      setTimeout(function() { el.classList.remove('synced-flash'); }, 700);
+    }
+  }, 30);
+}
+
+/**
+ * Render the revision summary card in the sidebar.
+ */
+function dvRenderRevisionSummary() {
+  var el = document.getElementById('dv-rev-summary-inner');
+  if (!el) return;
+
+  var isToday = (dvCurrentDate === todayStr());
+  var due = isToday ? getDueTopics() : [];
+  var revisedMap = dvGetDiaryRevised(dvCurrentDate);
+  var revisedIds = Object.keys(revisedMap);
+  var revisedCount = revisedIds.length;
+
+  if (!due.length && !revisedCount) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:6px 0">✅ No revisions due</div>';
+    return;
+  }
+
+  var total = isToday ? due.length : revisedCount;
+  var pct = total ? Math.round((revisedCount / total) * 100) : 100;
+  var pctColor = pct === 100 ? 'var(--green)' : pct >= 50 ? 'var(--primary)' : 'var(--yellow)';
+
+  var html = '';
+
+  // Progress bar
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
+    '<div style="flex:1;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden">' +
+      '<div style="height:100%;width:' + pct + '%;background:' + pctColor + ';border-radius:3px;transition:width .4s"></div>' +
+    '</div>' +
+    '<div style="font-family:var(--font-mono);font-size:11px;color:' + pctColor + ';font-weight:700">' + revisedCount + '/' + (isToday ? total : revisedCount) + '</div>' +
+  '</div>';
+
+  // Show revised topics
+  if (revisedCount) {
+    revisedIds.slice(0, 5).forEach(function(tid) {
+      var r = findTopic(tid);
+      if (!r) return;
+      var t = r.topic;
+      var sc = revisedMap[tid].score;
+      var scoreEmoji = sc === 0 ? '😵' : sc === 2 ? '😓' : sc === 5 ? '🚀' : '👍';
+      html += '<div class="dv-rev-sum-chip sum-done">' +
+        '<span style="color:var(--green)">✅</span>' +
+        '<span style="flex:1;font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + t.name.slice(0, 20) + '</span>' +
+        '<span style="font-size:12px">' + scoreEmoji + '</span>' +
+        '<span class="dv-rev-sum-done-pct">+' + t.interval + 'd</span>' +
+      '</div>';
+    });
+    if (revisedIds.length > 5) {
+      html += '<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:4px">+' + (revisedIds.length - 5) + ' more revised</div>';
+    }
+  }
+
+  // Show remaining due topics (today only)
+  if (isToday) {
+    var remaining = due.filter(function(x) { return !revisedMap[x.topic.id]; });
+    if (remaining.length) {
+      html += '<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px">Still Due</div>';
+      remaining.slice(0, 3).forEach(function(x) {
+        var t = x.topic;
+        html += '<div class="dv-rev-sum-chip" onclick="document.getElementById(\'dvrev-' + t.id + '\')&&document.getElementById(\'dvrev-' + t.id + '\').scrollIntoView({behavior:\'smooth\',block:\'center\'})">' +
+          '<span>🔔</span>' +
+          '<span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + t.name.slice(0, 20) + '</span>' +
+          '<span class="dv-rev-sum-pct">' + getTopicCompletion(t) + '%</span>' +
+        '</div>';
+      });
+      if (remaining.length > 3) {
+        html += '<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:4px">' + (remaining.length - 3) + ' more pending</div>';
+      }
+    }
+  }
+
+  el.innerHTML = html;
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────────
