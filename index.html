@@ -1278,7 +1278,25 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
 .dv-rev-sum-pct{font-family:var(--font-mono);font-size:11px;margin-left:auto;color:var(--primary)}
 .dv-rev-sum-done-pct{font-family:var(--font-mono);font-size:11px;margin-left:auto;color:var(--green)}
 
-/* ── MASTERY CHECKLIST PANEL ── */
+/* ── MOVE TREE PICKER ── */
+.move-tree-item{transition:background .12s;user-select:none}
+.move-tree-item:hover{background:var(--surface2)!important}
+.move-tree-item.selected{background:var(--primary-dim)!important;border-left:3px solid var(--primary)!important}
+/* ── RESOURCE LINKS ── */
+.link-item{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--r-sm);margin-bottom:5px;transition:border-color .15s;
+}
+.link-item:hover{border-color:rgba(58,134,255,.35)}
+.link-item a{color:var(--blue);font-size:12px;font-weight:600;text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.link-item a:hover{text-decoration:underline}
+.link-item .link-icon{font-size:14px;flex-shrink:0}
+.link-item .del-link-btn{flex-shrink:0;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:4px;transition:color .12s}
+.link-item .del-link-btn:hover{color:var(--red)}
+.link-add-row{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.link-add-row input{flex:1;min-width:100px}
+.link-add-row .add-res-btn{flex-shrink:0;white-space:nowrap}
 .dv-rev-checklist-panel{
   margin-top:10px;padding:14px;
   background:linear-gradient(135deg,rgba(0,210,190,0.04),rgba(58,134,255,0.03));
@@ -2185,19 +2203,23 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
      MODALS
 =================================================== -->
 
-<!-- Move Topic -->
+<!-- Organize / Move (Topics & Folders) -->
 <div class="modal-overlay" id="move-topic-overlay" onclick="if(event.target===this)closeMoveTopic()">
-  <div class="modal">
+  <div class="modal" style="max-width:460px">
     <button class="modal-close" onclick="closeMoveTopic()">✕</button>
-    <div class="modal-title">📦 Move Topic</div>
-    <div class="modal-subtitle">Organize this topic into any folder or subfolder.</div>
+    <div class="modal-title" id="move-modal-title">📦 Move Topic</div>
+    <div class="modal-subtitle" id="move-modal-subtitle">Choose a destination folder</div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label class="form-label">Search folders</label>
+      <input class="form-input" id="move-folder-search" placeholder="Type to filter…" oninput="filterMoveOptions(this.value)" style="margin-bottom:8px">
+    </div>
     <div class="form-group">
       <label class="form-label">Destination Folder</label>
-      <select class="form-select" id="move-topic-dest"></select>
+      <div id="move-folder-tree" style="max-height:320px;overflow-y:auto;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--surface)"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeMoveTopic()">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmMoveTopic()">Move Topic</button>
+      <button class="btn btn-primary" id="move-confirm-btn" onclick="confirmMoveTopic()" disabled>Move Here</button>
     </div>
   </div>
 </div>
@@ -2411,13 +2433,17 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
   </div>
 </div>
 
-<!-- Add Nested Folder -->
+<!-- Add Nested Folder (any depth) -->
 <div class="modal-overlay" id="add-subfolder-overlay" onclick="if(event.target===this)closeAddSubfolder()">
   <div class="modal">
     <button class="modal-close" onclick="closeAddSubfolder()">✕</button>
     <div class="modal-title">📂 Add Nested Folder</div>
     <div class="modal-subtitle" id="add-subfolder-subtitle">Add a section inside this folder</div>
-    <div class="form-group"><label class="form-label">Subfolder Name *</label><input class="form-input" id="add-subfolder-name" placeholder="e.g. Block A / Prof A"></div>
+    <div class="form-group"><label class="form-label">Folder Name *</label><input class="form-input" id="add-subfolder-name" placeholder="e.g. Block A / Week 1" onkeydown="if(event.key==='Enter')saveAddSubfolder()"></div>
+    <div class="form-group">
+      <label class="form-label">Icon (optional)</label>
+      <input class="form-input" id="add-subfolder-icon" placeholder="📂" style="font-size:20px;width:80px">
+    </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeAddSubfolder()">Cancel</button>
       <button class="btn btn-primary" onclick="saveAddSubfolder()">Create Folder</button>
@@ -2615,7 +2641,11 @@ function patchTree(folders,parentId){
   parentId=parentId||null;
   folders.forEach(function(f){
     f.parentId=parentId; f.subfolders=f.subfolders||[]; f.topics=f.topics||[];
-    f.topics.forEach(function(t){t.parentId=f.id; t.starred=t.starred||false;});
+    f.icon=f.icon||'📂';
+    f.topics.forEach(function(t){
+      t.parentId=f.id; t.starred=t.starred||false;
+      t.links=t.links||[]; t.stages=t.stages||{lectures:false,reading:false,notes:false,mcq:false,mastered:false};
+    });
     patchTree(f.subfolders,f.id);
   });
 }
@@ -2682,10 +2712,11 @@ function fmtHrsMin(s){var h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return 
 function fmtSec(s){var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;return pad(h)+':'+pad(m)+':'+pad(ss);}
 function getTopicCompletion(t){return Math.round((STAGE_KEYS.filter(function(k){return t.stages[k];}).length/STAGE_KEYS.length)*100);}
 function calcNextInterval(t){return SR_INTERVALS[Math.min(t.repetitions||0,SR_INTERVALS.length-1)];}
-function autoSpacedRepetition(topic){
+function autoSpacedRepetition(topic, skipHeatmap){
   var reps=topic.repetitions||0,interval=SR_INTERVALS[Math.min(reps,SR_INTERVALS.length-1)],today=todayStr();
   topic.interval=interval; topic.repetitions=reps+1; topic.lastReviewDate=today; topic.nextReviewDate=addDays(today,interval);
-  state.heatmap[today]=(state.heatmap[today]||0)+1; trackWeeklyStudied(topic.id); updateStreak(); saveState();
+  if(!skipHeatmap){state.heatmap[today]=(state.heatmap[today]||0)+1;}
+  trackWeeklyStudied(topic.id); updateStreak(); saveState();
 }
 function getDueTopics(){var t=todayStr();return getAllTopics().filter(function(x){return x.topic.nextReviewDate&&x.topic.nextReviewDate<=t;});}
 function getNextReviewLabel(topic){
@@ -2895,8 +2926,12 @@ function renderFolders(){
     var pct=total?Math.round((mastered/total)*100):0,due=all.filter(function(t){return t.nextReviewDate&&t.nextReviewDate<=today;}).length;
     return '<div class="folder-card" onclick="navigateToFolder(\''+f.id+'\')">'+
       '<div class="folder-card-top"><span class="folder-icon">'+f.icon+'</span><span class="folder-badge">'+(f.label||'')+'</span>'+
-      '<div class="folder-actions"><button class="icon-btn" onclick="event.stopPropagation();openEditFolder(\''+f.id+'\')" title="Edit">✏️</button>'+
-      '<button class="icon-btn danger" onclick="event.stopPropagation();deleteFolder(\''+f.id+'\')" title="Delete">🗑️</button></div></div>'+
+      '<div class="folder-actions">'+
+        '<button class="icon-btn" onclick="event.stopPropagation();openAddSubfolderIn(\''+f.id+'\')" title="Add nested folder">📂+</button>'+
+        '<button class="icon-btn" onclick="event.stopPropagation();openMoveFolder(\''+f.id+'\')" title="Move folder">📦</button>'+
+        '<button class="icon-btn" onclick="event.stopPropagation();openEditFolder(\''+f.id+'\')" title="Edit">✏️</button>'+
+        '<button class="icon-btn danger" onclick="event.stopPropagation();deleteFolder(\''+f.id+'\')" title="Delete">🗑️</button>'+
+      '</div></div>'+
       '<div class="folder-name">'+f.name+'</div>'+
       '<div class="folder-stats"><span>📑 '+total+' nested topics</span></div>'+
       '<div class="folder-progress-bar"><div class="folder-progress-fill" style="width:'+pct+'%;background:'+(f.color||'var(--primary)')+'"></div></div>'+
@@ -2907,10 +2942,18 @@ function renderFolders(){
 function renderSubfolderView(){
   var folder=findFolder(currentFolderId); if(!folder){showView('folders');return;}
   var titleEl=document.getElementById('subfolder-view-title'),bcEl=document.getElementById('subfolder-breadcrumb');
-  if(titleEl) titleEl.textContent=folder.icon+' '+folder.name;
+  if(titleEl) titleEl.textContent=(folder.icon||'📂')+' '+folder.name;
   var crumbs=[],cur=folder;
   while(cur){crumbs.unshift(cur);cur=cur.parentId?findFolder(cur.parentId):null;}
-  if(bcEl) bcEl.innerHTML='<span class="breadcrumb-item" onclick="showView(\'folders\')">📁 Root Folders</span>'+crumbs.map(function(c,i){return '<span class="breadcrumb-sep">›</span><span class="breadcrumb-item '+(i===crumbs.length-1?'active':'')+'" onclick="navigateToFolder(\''+c.id+'\')">'+(c.icon||'📂')+' '+c.name+'</span>';}).join('');
+  if(bcEl) bcEl.innerHTML=
+    '<span class="breadcrumb-item" onclick="showView(\'folders\')">📁 Root</span>'+
+    crumbs.map(function(c,i){
+      return '<span class="breadcrumb-sep">›</span>'+
+        '<span class="breadcrumb-item '+(i===crumbs.length-1?'active':'')+'" onclick="navigateToFolder(\''+c.id+'\')">'+(c.icon||'📂')+' '+c.name+'</span>';
+    }).join('')+
+    '<span style="margin-left:auto;display:flex;gap:4px">'+
+      '<button class="icon-btn" onclick="openMoveFolder(\''+folder.id+'\')" title="Move this folder" style="font-size:12px;padding:3px 8px">📦 Move</button>'+
+    '</span>';
   renderSubfolderList(folder);renderTopicList(folder.topics);
 }
 function renderSubfolderList(folder){
@@ -2921,7 +2964,14 @@ function renderSubfolderList(folder){
     folder.subfolders.map(function(sf){
       var all=getFolderTopicsRec(sf),total=all.length,mastered=all.filter(function(t){return t.stages.mastered;}).length;
       var due=all.filter(function(t){return t.nextReviewDate&&t.nextReviewDate<=today;}).length;
-      return '<div class="subfolder-item" onclick="navigateToFolder(\''+sf.id+'\')"><span style="font-size:20px">📂</span><div style="flex:1"><div style="font-family:var(--font-head);font-size:13px;font-weight:700">'+sf.name+'</div><div style="font-size:11px;color:var(--text-muted)">'+total+' topics · '+mastered+' mastered'+(due>0?' · 🔔 '+due+' due':'')+'</div></div><button class="icon-btn danger" style="margin-right:8px" onclick="event.stopPropagation();deleteFolder(\''+sf.id+'\')" title="Delete">🗑️</button><span class="subfolder-arrow">›</span></div>';
+      return '<div class="subfolder-item" onclick="navigateToFolder(\''+sf.id+'\')">'+
+        '<span style="font-size:20px">'+(sf.icon||'📂')+'</span>'+
+        '<div style="flex:1"><div style="font-family:var(--font-head);font-size:13px;font-weight:700">'+sf.name+'</div>'+
+        '<div style="font-size:11px;color:var(--text-muted)">'+total+' topics · '+mastered+' mastered'+(due>0?' · 🔔 '+due+' due':'')+'</div></div>'+
+        '<button class="icon-btn" style="margin-right:2px" onclick="event.stopPropagation();openMoveFolder(\''+sf.id+'\')" title="Move folder">📦</button>'+
+        '<button class="icon-btn" style="margin-right:2px" onclick="event.stopPropagation();openEditFolder(\''+sf.id+'\')" title="Edit">✏️</button>'+
+        '<button class="icon-btn danger" style="margin-right:8px" onclick="event.stopPropagation();deleteFolder(\''+sf.id+'\')" title="Delete">🗑️</button>'+
+        '<span class="subfolder-arrow">›</span></div>';
     }).join('')+'</div><div class="section-title" style="margin-top:16px">📑 Topics in '+folder.name+'</div>';
 }
 
@@ -3007,20 +3057,43 @@ function buildTopicBody(topic){
   '</div>';
   var notesHtml='<textarea class="notes-textarea" placeholder="Your notes on this topic..." oninput="saveTopic(\''+topic.id+'\',\'notes\',this.value)">'+(topic.notes||'')+'</textarea>';
   var mcqHtml='<div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap"><span style="font-size:12px;color:var(--text-muted)">MCQ Score:</span><input type="number" min="0" max="100" value="'+(topic.mcqScore||'')+'" placeholder="%" style="width:70px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:4px 8px;color:var(--text);font-size:12px;outline:none" oninput="saveTopic(\''+topic.id+'\',\'mcqScore\',+this.value||null)"><button class="btn btn-ghost btn-sm" onclick="toggleWeak(\''+topic.id+'\')">⚠️ '+(topic.weakFlag?'Remove Weak Flag':'Flag as Weak')+'</button><button class="btn btn-secondary btn-sm" onclick="openMoveTopic(\''+topic.id+'\')" style="margin-left:auto">📦 Move</button></div>';
-  var linksHtml=(topic.links||[]).map(function(l,i){return '<div class="resource-link-item"><a href="'+l.url+'" target="_blank">'+(l.title||l.url)+'</a><button class="del-link-btn" onclick="removeLink(\''+topic.id+'\','+i+')">✕</button></div>';}).join('');
-  var resourcesHtml='<div class="resources-grid">'+
-    '<div class="resource-input-group"><label class="resource-label">📗 Textbook Ref</label><input class="resource-input" placeholder="e.g. Snell\'s, pg 142" value="'+(topic.resources&&topic.resources.book?topic.resources.book:'')+'" oninput="saveTopic(\''+topic.id+'\',\'resources.book\',this.value)"></div>'+
-    '<div class="resource-input-group"><label class="resource-label">🎥 Video Ref</label><input class="resource-input" placeholder="e.g. Armando YouTube" value="'+(topic.resources&&topic.resources.video?topic.resources.video:'')+'" oninput="saveTopic(\''+topic.id+'\',\'resources.video\',this.value)"></div>'+
-    '</div><div class="resource-links-list">'+linksHtml+'</div>'+
-    '<div class="add-resource-row"><input class="resource-input" id="link-url-'+topic.id+'" placeholder="https://..." style="flex:2"><input class="resource-input" id="link-title-'+topic.id+'" placeholder="Title" style="flex:1"><button class="add-res-btn" onclick="addLink(\''+topic.id+'\')">+ Add Link</button></div>';
+  var linksHtml=(topic.links||[]).map(function(l,i){
+    var url=l.url||'';
+    var title=l.title||url;
+    var icon=url.includes('youtube')||url.includes('youtu.be')?'🎥':url.includes('pdf')?'📄':url.includes('drive.google')?'📁':url.includes('wikipedia')?'📖':'🔗';
+    return '<div class="link-item">'+
+      '<span class="link-icon">'+icon+'</span>'+
+      '<a href="'+url+'" target="_blank" rel="noopener" title="'+url+'">'+title+'</a>'+
+      '<button class="del-link-btn" onclick="event.stopPropagation();removeLink(\''+topic.id+'\','+i+')" title="Remove">✕</button>'+
+    '</div>';
+  }).join('');
+  var resourcesHtml='<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);padding:12px">'+
+    // Existing links list
+    '<div id="links-list-'+topic.id+'">'+(linksHtml||'<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">No links yet. Add textbook pages, videos, PDFs, or websites.</div>')+'</div>'+
+    // Add link row
+    '<div class="link-add-row">'+
+      '<input class="resource-input" id="link-title-'+topic.id+'" placeholder="Name (e.g. Ganong Ch.12)" style="flex:1.2" onkeydown="if(event.key===\'Enter\')addLink(\''+topic.id+'\')">'+
+      '<input class="resource-input" id="link-url-'+topic.id+'" placeholder="URL or page ref (e.g. https://…)" style="flex:2" onkeydown="if(event.key===\'Enter\')addLink(\''+topic.id+'\')">'+
+      '<button class="add-res-btn" onclick="addLink(\''+topic.id+'\')">+ Add</button>'+
+    '</div>'+
+    // Textbook & video quick refs
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2)">'+
+      '<div class="resource-input-group"><label class="resource-label">📗 Textbook Ref</label><input class="resource-input" placeholder="e.g. Snell\'s, pg 142" value="'+(topic.resources&&topic.resources.book?topic.resources.book:'')+'" oninput="saveTopic(\''+topic.id+'\',\'resources.book\',this.value)"></div>'+
+      '<div class="resource-input-group"><label class="resource-label">🎥 Video Ref</label><input class="resource-input" placeholder="e.g. Armando YouTube" value="'+(topic.resources&&topic.resources.video?topic.resources.video:'')+'" oninput="saveTopic(\''+topic.id+'\',\'resources.video\',this.value)"></div>'+
+    '</div>'+
+  '</div>';
   var promptTypes=[['concept','🧠 Explain','Deep concept explanation'],['mcq','📝 MCQs','Generate 50 practice MCQs'],['research','🔬 Research','Latest studies & guidelines'],['recall','🔁 Recall','20 active recall questions'],['teach','🗣️ Teach Me','Feynman technique']];
   var promptsHtml=promptTypes.map(function(p){return '<button class="prompt-btn" onclick="copyPrompt(\''+topic.id+'\',\''+p[0]+'\')"><div class="prompt-btn-title">'+p[1]+' <span class="copy-indicator" id="ci-'+topic.id+'-'+p[0]+'">✓ Copied!</span></div><div class="prompt-btn-sub">'+p[2]+'</div></button>';}).join('');
   var genHtml='<button class="prompt-btn gen-html" onclick="copyPrompt(\''+topic.id+'\',\'htmlStudyFile\')"><span style="font-size:26px">✨</span><div><div class="prompt-btn-title">Generate Full Study File <span class="copy-indicator" id="ci-'+topic.id+'-htmlStudyFile">✓ Copied!</span></div><div class="prompt-btn-sub">FIKRI system · 7 tabs · MCQs · Cases · Recall</div></div></button>';
   return '<div class="topic-section-title">📋 Study Stages</div><div class="stages-grid">'+stagesHtml+'</div>'+
-    '<div class="topic-section-title">🔁 Automated Spaced Repetition</div>'+sm2Html+
-    '<div class="topic-section-title">📝 Notes & Links</div>'+notesHtml+mcqHtml+'<div style="margin-top:12px"></div>'+resourcesHtml+
+    '<div class="topic-section-title">🔁 Revision Schedule (SM-2)</div>'+sm2Html+
+    '<div class="topic-section-title">📝 Notes</div>'+notesHtml+mcqHtml+
+    '<div class="topic-section-title">🔗 Resources & Links <span style="font-size:11px;color:var(--text-muted);font-weight:400">(add unlimited: textbooks, videos, PDFs, websites)</span></div>'+resourcesHtml+
     '<div class="topic-section-title">🤖 AI Study Prompts</div><div class="prompts-grid">'+promptsHtml+genHtml+'</div>'+
-    '<div style="margin-top:12px;text-align:right"><button class="btn btn-danger btn-sm" onclick="deleteTopic(\''+topic.id+'\')">🗑️ Delete Topic</button></div>';
+    '<div style="margin-top:12px;display:flex;gap:8px;justify-content:space-between;align-items:center">'+
+      '<button class="btn btn-secondary btn-sm" onclick="openMoveTopic(\''+topic.id+'\')">📦 Move Topic</button>'+
+      '<button class="btn btn-danger btn-sm" onclick="deleteTopic(\''+topic.id+'\')">🗑️ Delete Topic</button>'+
+    '</div>';
 }
 
 // ─────────────────────────────────────────────
@@ -3054,7 +3127,7 @@ function toggleStage(topicId,stageKey){
 
     // If mastered stage ticked: apply full SM-2 progression
     if(stageKey==='mastered'){
-      autoSpacedRepetition(r.topic);
+      autoSpacedRepetition(r.topic, true); // skipHeatmap — already counted above
       showToast('🏆 Mastered! Next review in '+r.topic.interval+'d','success');
     }
   }
@@ -3096,12 +3169,23 @@ function saveTopic(topicId,field,value){
 }
 function addLink(topicId){
   var urlEl=document.getElementById('link-url-'+topicId),titleEl=document.getElementById('link-title-'+topicId);
-  if(!urlEl||!urlEl.value.trim()) return;
+  var url=(urlEl?urlEl.value.trim():'');
+  var title=(titleEl?titleEl.value.trim():'');
+  if(!url&&!title){showToast('Enter a name or URL','error');return;}
+  // If it looks like a URL but has no protocol, prefix https://
+  if(url&&!url.match(/^https?:\/\//i)&&url.indexOf('.')>0) url='https://'+url;
+  if(!title) title=url;
   var r=findTopic(topicId); if(!r) return;
-  r.topic.links=r.topic.links||[]; r.topic.links.push({url:urlEl.value.trim(),title:titleEl?titleEl.value.trim():''});
-  urlEl.value=''; if(titleEl) titleEl.value=''; saveState(); refreshTopicCard(topicId);
+  r.topic.links=r.topic.links||[];
+  r.topic.links.push({url:url,title:title,addedAt:todayStr()});
+  if(urlEl) urlEl.value=''; if(titleEl) titleEl.value='';
+  saveState(); refreshTopicCard(topicId);
+  showToast('🔗 "'+title+'" added!','success');
 }
-function removeLink(topicId,idx){var r=findTopic(topicId);if(!r)return;r.topic.links.splice(idx,1);saveState();refreshTopicCard(topicId);}
+function removeLink(topicId,idx){
+  var r=findTopic(topicId);if(!r)return;
+  r.topic.links.splice(idx,1);saveState();refreshTopicCard(topicId);
+}
 function deleteTopic(topicId){
   if(!confirm('Delete this topic? This cannot be undone.')) return;
   var r=findTopic(topicId); if(!r) return;
@@ -3203,14 +3287,30 @@ function openAddSubfolder(){
   var f=findFolder(currentFolderId); if(!f) return;
   document.getElementById('add-subfolder-subtitle').textContent='Inside "'+f.name+'"';
   document.getElementById('add-subfolder-name').value='';
+  var iconEl=document.getElementById('add-subfolder-icon'); if(iconEl) iconEl.value='📂';
   document.getElementById('add-subfolder-overlay').classList.add('show');
+  setTimeout(function(){var n=document.getElementById('add-subfolder-name');if(n)n.focus();},100);
 }
-function closeAddSubfolder(){document.getElementById('add-subfolder-overlay').classList.remove('show');}
+function openAddSubfolderIn(folderId){
+  // Open subfolder dialog for a specific folder (from folder cards)
+  var prev=currentFolderId; currentFolderId=folderId;
+  openAddSubfolder();
+  // Restore on close — override close to restore
+  var origClose=closeAddSubfolder;
+  window._subfolderParentRestore=function(){currentFolderId=prev;};
+}
+function closeAddSubfolder(){
+  document.getElementById('add-subfolder-overlay').classList.remove('show');
+  if(window._subfolderParentRestore){window._subfolderParentRestore();window._subfolderParentRestore=null;}
+}
 function saveAddSubfolder(){
-  var name=document.getElementById('add-subfolder-name').value.trim(); if(!name){showToast('Subfolder name required','error');return;}
+  var name=document.getElementById('add-subfolder-name').value.trim(); if(!name){showToast('Folder name required','error');return;}
   var f=findFolder(currentFolderId); if(!f) return;
-  f.subfolders=f.subfolders||[];f.subfolders.push({id:genId(),parentId:f.id,name:name,topics:[],subfolders:[]});
-  saveState(); closeAddSubfolder(); renderSubfolderView(); showToast('Subfolder "'+name+'" created','success');
+  var iconEl=document.getElementById('add-subfolder-icon');
+  var icon=(iconEl&&iconEl.value.trim())||'📂';
+  f.subfolders=f.subfolders||[];
+  f.subfolders.push({id:genId(),parentId:f.id,name:name,icon:icon,topics:[],subfolders:[]});
+  saveState(); closeAddSubfolder(); renderSubfolderView(); showToast('📂 "'+name+'" created','success');
 }
 function openAddTopic(){
   document.getElementById('add-topic-name').value=''; document.getElementById('add-topic-difficulty').value='medium';
@@ -3225,27 +3325,149 @@ function saveAddTopic(){
   var topic=createTopicData(name,currentFolderId,{difficulty:document.getElementById('add-topic-difficulty').value,weightage:+document.getElementById('add-topic-weightage').value||2,tags:tags});
   f.topics.push(topic); saveState(); closeAddTopic(); renderSubfolderView(); showToast('Topic "'+name+'" added','success');
 }
-var movingTopicId=null;
+// ─────────────────────────────────────────────
+//  MOVE / ORGANIZE — topics & folders (infinite nesting)
+// ─────────────────────────────────────────────
+var _moveItem = null; // {type:'topic'|'folder', id:string}
+var _moveSelectedDest = null;
+
 function openMoveTopic(topicId){
-  movingTopicId=topicId;
-  document.getElementById('move-topic-dest').innerHTML=buildFolderOptions(state.folders,0);
+  var r=findTopic(topicId); if(!r) return;
+  _moveItem={type:'topic',id:topicId};
+  _moveSelectedDest=null;
+  document.getElementById('move-modal-title').textContent='📦 Move Topic';
+  document.getElementById('move-modal-subtitle').textContent='"'+r.topic.name+'" → choose destination folder';
+  var btn=document.getElementById('move-confirm-btn'); if(btn) btn.disabled=true;
+  document.getElementById('move-folder-search').value='';
+  _buildMoveTree('');
   document.getElementById('move-topic-overlay').classList.add('show');
 }
+
+function openMoveFolder(folderId){
+  var f=findFolder(folderId); if(!f) return;
+  _moveItem={type:'folder',id:folderId};
+  _moveSelectedDest=null;
+  document.getElementById('move-modal-title').textContent='📂 Move Folder';
+  document.getElementById('move-modal-subtitle').textContent='"'+f.name+'" → choose new parent (or Root)';
+  var btn=document.getElementById('move-confirm-btn'); if(btn) btn.disabled=true;
+  document.getElementById('move-folder-search').value='';
+  _buildMoveTree('');
+  document.getElementById('move-topic-overlay').classList.add('show');
+}
+
+function filterMoveOptions(q){_buildMoveTree(q.toLowerCase());}
+
+function _buildMoveTree(q){
+  var container=document.getElementById('move-folder-tree'); if(!container) return;
+  var html='';
+  // Root option (for topics and folder moves)
+  if(_moveItem&&_moveItem.type==='folder'){
+    html+='<div class="move-tree-item'+((_moveSelectedDest==='__root__')?' selected':'')+'" data-dest="__root__" onclick="selectMoveDest(\'__root__\')" style="padding:10px 14px;border-bottom:1px solid var(--border2)">' +
+      '<span style="font-size:14px">🏠</span> <span style="font-size:12px;font-weight:600">Root Level (top-level folder)</span></div>';
+  }
+  html+=_buildMoveTreeNodes(state.folders, 0, q);
+  container.innerHTML=html||'<div style="padding:12px;color:var(--text-muted);font-size:12px;text-align:center">No folders found</div>';
+}
+
+function _buildMoveTreeNodes(folders, depth, q){
+  var html='';
+  folders.forEach(function(f){
+    // Skip self and descendants when moving a folder
+    if(_moveItem&&_moveItem.type==='folder'){
+      if(f.id===_moveItem.id) return;
+      if(_isFolderDescendant(f,_moveItem.id)) return;
+    }
+    var matches=!q||(f.name.toLowerCase().indexOf(q)>=0);
+    var childHtml=_buildMoveTreeNodes(f.subfolders||[],depth+1,q);
+    if(!matches&&!childHtml) return;
+    var indent=depth*16;
+    var isSelected=_moveSelectedDest===f.id;
+    html+='<div class="move-tree-item'+(isSelected?' selected':'')+'" data-dest="'+f.id+'" onclick="selectMoveDest(\''+f.id+'\')" style="padding:8px 12px 8px '+(12+indent)+'px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:8px;cursor:pointer">' +
+      (depth>0?'<span style="color:var(--text-dim);font-size:11px">'+'\u2514\u2500'.repeat(1)+'</span>':'')+
+      '<span style="font-size:14px">'+(f.icon||'📂')+'</span>' +
+      '<span style="font-size:12px;font-weight:600;flex:1">'+f.name+'</span>' +
+      '<span style="font-size:10px;color:var(--text-muted)">'+(f.topics?f.topics.length:0)+' topics</span>' +
+    '</div>';
+    if(childHtml) html+=childHtml;
+  });
+  return html;
+}
+
+function _isFolderDescendant(folder, targetId){
+  if(!folder.subfolders) return false;
+  for(var i=0;i<folder.subfolders.length;i++){
+    if(folder.subfolders[i].id===targetId) return true;
+    if(_isFolderDescendant(folder.subfolders[i],targetId)) return true;
+  }
+  return false;
+}
+
+function selectMoveDest(destId){
+  _moveSelectedDest=destId;
+  document.querySelectorAll('.move-tree-item').forEach(function(el){
+    el.classList.toggle('selected',el.getAttribute('data-dest')===destId);
+  });
+  var btn=document.getElementById('move-confirm-btn'); if(btn) btn.disabled=false;
+}
+
+function closeMoveTopic(){
+  document.getElementById('move-topic-overlay').classList.remove('show');
+  _moveItem=null; _moveSelectedDest=null;
+}
+
+function confirmMoveTopic(){
+  if(!_moveItem||!_moveSelectedDest){showToast('Select a destination first','error');return;}
+
+  if(_moveItem.type==='topic'){
+    var res=findTopic(_moveItem.id); if(!res){showToast('Topic not found','error');closeMoveTopic();return;}
+    var topic=res.topic,srcFolder=res.folder;
+    if(srcFolder.id===_moveSelectedDest){closeMoveTopic();return;}
+    var dest=findFolder(_moveSelectedDest); if(!dest){showToast('Destination not found','error');return;}
+    srcFolder.topics=srcFolder.topics.filter(function(t){return t.id!==_moveItem.id;});
+    topic.parentId=_moveSelectedDest; dest.topics=dest.topics||[]; dest.topics.push(topic);
+    saveState(); closeMoveTopic();
+    if(currentView==='subfolder') renderSubfolderView();
+    showToast('📦 Moved to "'+dest.name+'"','success');
+
+  } else if(_moveItem.type==='folder'){
+    var f=findFolder(_moveItem.id); if(!f){showToast('Folder not found','error');closeMoveTopic();return;}
+    // Remove from current parent
+    _removeFolderFromParent(_moveItem.id);
+    if(_moveSelectedDest==='__root__'){
+      f.parentId=null; state.folders.push(f);
+    } else {
+      var dest=findFolder(_moveSelectedDest); if(!dest){showToast('Destination not found','error');return;}
+      // Prevent moving into self or own descendant (double-checked)
+      if(dest.id===f.id||_isFolderDescendant(f,dest.id)){showToast('Cannot move folder into itself','error');return;}
+      f.parentId=dest.id; dest.subfolders=dest.subfolders||[]; dest.subfolders.push(f);
+    }
+    saveState(); closeMoveTopic();
+    if(currentView==='subfolder') renderSubfolderView(); else renderFolders();
+    showToast('📂 Folder moved successfully','success');
+  }
+}
+
+function _removeFolderFromParent(folderId){
+  // Try root level
+  var idx=state.folders.findIndex(function(f){return f.id===folderId;});
+  if(idx>=0){state.folders.splice(idx,1);return;}
+  // Recurse
+  function removeFrom(list){
+    for(var i=0;i<list.length;i++){
+      var sf=list[i].subfolders||[];
+      var fi=sf.findIndex(function(x){return x.id===folderId;});
+      if(fi>=0){sf.splice(fi,1);list[i].subfolders=sf;return true;}
+      if(removeFrom(sf)) return true;
+    }
+    return false;
+  }
+  removeFrom(state.folders);
+}
+
 function buildFolderOptions(folders,depth){
   var html='',prefix='\u00a0'.repeat(depth*4)+(depth>0?'↳ ':'');
   folders.forEach(function(f){html+='<option value="'+f.id+'">'+prefix+(f.icon||'📂')+' '+f.name+'</option>';if(f.subfolders)html+=buildFolderOptions(f.subfolders,depth+1);});
   return html;
-}
-function closeMoveTopic(){document.getElementById('move-topic-overlay').classList.remove('show');}
-function confirmMoveTopic(){
-  var destId=document.getElementById('move-topic-dest').value;
-  var res=findTopic(movingTopicId); if(!res){showToast('Topic not found','error');closeMoveTopic();return;}
-  var topic=res.topic,folder=res.folder;
-  if(folder.id===destId){closeMoveTopic();return;}
-  var dest=findFolder(destId); if(!dest){showToast('Destination not found','error');return;}
-  folder.topics=folder.topics.filter(function(t){return t.id!==movingTopicId;}); topic.parentId=destId; dest.topics.push(topic);
-  saveState(); closeMoveTopic(); if(currentView==='subfolder') renderSubfolderView();
-  showToast('📦 Topic moved to "'+dest.name+'"','success');
 }
 
 // ─────────────────────────────────────────────
@@ -4736,18 +4958,28 @@ function dvSyncTopicFromTask(task, completing) {
     }
     // Update last studied date
     t.lastStudied = dvCurrentDate;
-    // Improve repetition count slightly
-    if ((t.repetitions || 0) < 1) t.repetitions = 1;
-    // Update heatmap
-    var today = todayStr();
-    state.heatmap[today] = (state.heatmap[today] || 0) + 1;
+    // Update heatmap for the ACTUAL date (not always today)
+    state.heatmap[dvCurrentDate] = (state.heatmap[dvCurrentDate] || 0) + 1;
+    // Auto-enroll in revision cycle if not already enrolled
+    if (!t.nextReviewDate) {
+      t.nextReviewDate = addDays(dvCurrentDate, 1);
+      t.lastReviewDate = dvCurrentDate;
+      t.interval = 1;
+      t.repetitions = t.repetitions || 0;
+    }
     // Track weekly
     if (typeof trackWeeklyStudied === 'function') trackWeeklyStudied(t.id);
-    // Update streak
-    if (typeof updateStreak === 'function') updateStreak();
-
+    // Update streak only for today
+    if (dvCurrentDate === todayStr()) {
+      if (typeof updateStreak === 'function') updateStreak();
+    }
+    // If mastered stage, run full SM-2
+    if (task.stageKey === 'mastered') {
+      autoSpacedRepetition(t);
+    }
     saveState();
-    showToast('✅ "' + t.name + '" ' + (task.stageKey ? '→ ' + (STAGE_LABELS[task.stageKey] || task.stageKey) + ' updated' : 'progress synced') + ' 🔗', 'success');
+    // Refresh home heatmap if visible
+    try { if (currentView === 'home') { renderHeatmap(); renderStreakUI(); renderDueToday(); } } catch(e) {}
   }
 }
 
