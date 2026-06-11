@@ -1381,7 +1381,11 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
 .dv-day-chip.today{border-color:var(--primary);color:var(--primary);background:var(--primary-dim)}
 .dv-day-chip.selected{background:var(--primary);color:#000;border-color:var(--primary);font-weight:700}
 .dv-day-chip.has-tasks::after{content:'';display:block;width:4px;height:4px;border-radius:50%;background:var(--green);margin:3px auto 0}
-.dv-day-chip.has-revisions::before{content:'🔁';display:block;font-size:9px;line-height:1;margin-bottom:1px}
+.dv-day-chip.has-revisions::before{content:'';display:none}
+/* Revised indicator — handled inline now */
+/* Backlog and all-done day indicators */
+.dv-day-chip.day-backlog{border-color:rgba(255,71,87,0.4)!important;background:rgba(255,71,87,0.06)!important;}
+.dv-day-chip.day-all-done{border-color:rgba(6,255,165,0.3)!important;background:rgba(6,255,165,0.05)!important;}
 /* Revised due chip */
 .dv-due-chip.revised{opacity:.65;background:rgba(6,255,165,0.04);border-color:rgba(6,255,165,.2)}
 
@@ -2967,7 +2971,40 @@ function buildTopicCard(topic){
 }
 function buildTopicBody(topic){
   var stagesHtml=STAGE_KEYS.map(function(k){return '<div class="stage-item '+(topic.stages[k]?'done':'')+' '+(k==='mastered'?'stage-mastered':'')+'" onclick="toggleStage(\''+topic.id+'\',\''+k+'\')"><div class="stage-checkbox">'+(topic.stages[k]?'✓':'')+'</div><span class="stage-label">'+STAGE_ICONS[k]+' '+STAGE_LABELS[k]+'</span></div>';}).join('');
-  var sm2Html='<div class="sm2-panel"><div class="sm2-info"><span>Interval: <b>'+(topic.interval||0)+'d</b></span><span>Reps: <b>'+(topic.repetitions||0)+'</b></span>'+(topic.lastReviewDate?'<span>Last: <b>'+topic.lastReviewDate+'</b></span>':'')+'</div><div class="sm2-buttons"><button class="sm2-btn" style="width:100%" onclick="openMasteryCheck(\''+topic.id+'\')">🏆 Mastery Checklist — Mark Reviewed<br><small>4-point science check · Unlocks spaced repetition · Next: '+calcNextInterval(topic)+'d</small></button></div></div>';
+  // ── SM-2 REVISION CYCLE DISPLAY ─────────────────────────────────
+  var reps=topic.repetitions||0;
+  var SR_LABELS=['Day 1','Day 3','Day 7','Day 14','Day 30','Day 60','Day 90','Day 180'];
+  var SR_WHY=['First recall (Ebbinghaus curve peaks at 24h)','Short-gap reinforcement (3-day consolidation window)','Weekly review (long-term potentiation solidifies)','Bi-weekly check (transfers to long-term memory)','Monthly review (maintains retrieval strength)','2-month recall (near-permanent encoding)','3-month check (expert-level fluency)','6-month maintenance (lifetime retention)'];
+  var cycleDotsHtml=SR_INTERVALS.slice(0,8).map(function(iv,i){
+    var done=reps>i;var active=reps===i&&topic.nextReviewDate;
+    var dotColor=done?'var(--green)':active?'var(--primary)':'var(--border2)';
+    var textColor=done?'var(--green)':active?'var(--primary)':'var(--text-dim)';
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:0" title="'+SR_WHY[i]+'">' +
+      '<div style="width:22px;height:22px;border-radius:50%;border:2px solid '+dotColor+';background:'+(done?'var(--green)':active?'var(--primary-dim)':'var(--surface3)')+';display:flex;align-items:center;justify-content:center;font-size:10px;color:'+(done?'#000':dotColor)+';transition:all .2s">'+(done?'✓':i+1)+'</div>'+
+      '<div style="font-size:9px;color:'+textColor+';text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:36px">'+SR_LABELS[i]+'</div>'+
+    '</div>';
+  }).join('<div style="flex:1;height:2px;background:var(--border2);margin-top:10px;max-width:12px"></div>');
+  var nextLabel=topic.nextReviewDate?(topic.nextReviewDate<=todayStr()?'<span style="color:var(--red);font-weight:700">⚠️ Overdue</span>':'<span style="color:var(--primary)">📅 '+topic.nextReviewDate+'</span>'):'<span style="color:var(--text-muted)">Tick any stage to enroll</span>';
+  var sm2Html='<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);padding:12px">' +
+    // Cycle track
+    '<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📅 Your Revision Schedule — SM-2 Algorithm</div>'+
+    '<div style="display:flex;align-items:center;gap:0;margin-bottom:12px;overflow-x:auto;padding-bottom:4px">'+cycleDotsHtml+'</div>'+
+    // Status row
+    '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px;padding-top:8px;border-top:1px solid var(--border2)">' +
+      '<span>Rep: <b style="color:var(--primary)">'+(reps||0)+'/'+(SR_INTERVALS.length)+'</b></span>'+
+      '<span>Interval: <b style="color:var(--primary)">'+(topic.interval||'—')+'d</b></span>'+
+      '<span>Next: '+nextLabel+'</span>'+
+      (topic.lastReviewDate?'<span style="color:var(--text-muted)">Last: '+topic.lastReviewDate+'</span>':'')+
+    '</div>'+
+    // Action buttons
+    '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+
+      '<button class="btn btn-primary btn-sm" onclick="openMasteryCheck(\''+topic.id+'\')" style="flex:1">🏆 Log Revision + Confidence Check</button>'+
+      (!topic.nextReviewDate?'<button class="btn btn-secondary btn-sm" onclick="quickEnrollRevision(\''+topic.id+'\')" style="flex:1">📅 Enroll in Revision Cycle</button>':'')+
+    '</div>'+
+    '<div style="font-size:10px;color:var(--text-dim);margin-top:6px;line-height:1.5">'+
+      '💡 <b>How it works:</b> Tick any stage above to auto-enroll. As you confirm revisions, the interval doubles (1→3→7→14→30→60→90→180 days). Based on Ebbinghaus Forgetting Curve + SM-2 spaced repetition algorithm.'+
+    '</div>'+
+  '</div>';
   var notesHtml='<textarea class="notes-textarea" placeholder="Your notes on this topic..." oninput="saveTopic(\''+topic.id+'\',\'notes\',this.value)">'+(topic.notes||'')+'</textarea>';
   var mcqHtml='<div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap"><span style="font-size:12px;color:var(--text-muted)">MCQ Score:</span><input type="number" min="0" max="100" value="'+(topic.mcqScore||'')+'" placeholder="%" style="width:70px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:4px 8px;color:var(--text);font-size:12px;outline:none" oninput="saveTopic(\''+topic.id+'\',\'mcqScore\',+this.value||null)"><button class="btn btn-ghost btn-sm" onclick="toggleWeak(\''+topic.id+'\')">⚠️ '+(topic.weakFlag?'Remove Weak Flag':'Flag as Weak')+'</button><button class="btn btn-secondary btn-sm" onclick="openMoveTopic(\''+topic.id+'\')" style="margin-left:auto">📦 Move</button></div>';
   var linksHtml=(topic.links||[]).map(function(l,i){return '<div class="resource-link-item"><a href="'+l.url+'" target="_blank">'+(l.title||l.url)+'</a><button class="del-link-btn" onclick="removeLink(\''+topic.id+'\','+i+')">✕</button></div>';}).join('');
@@ -2996,9 +3033,35 @@ function toggleTopic(id){
 function toggleStage(topicId,stageKey){
   var r=findTopic(topicId); if(!r) return;
   r.topic.stages[stageKey]=!r.topic.stages[stageKey];
-  if(r.topic.stages[stageKey]) trackWeeklyStudied(topicId);
-  if(r.topic.stages.mastered&&!r.topic.nextReviewDate){r.topic.nextReviewDate=addDays(todayStr(),1);r.topic.lastReviewDate=todayStr();state.heatmap[todayStr()]=(state.heatmap[todayStr()]||0)+1;updateStreak();}
+  var today=todayStr();
+
+  if(r.topic.stages[stageKey]){
+    // ANY stage tick → update heatmap + streak (fix: was only on mastered)
+    trackWeeklyStudied(topicId);
+    state.heatmap[today]=(state.heatmap[today]||0)+1;
+    updateStreak();
+
+    // Auto-enroll in revision cycle when any stage is first ticked
+    // Uses our predefined SM-2 schedule: 1→3→7→14→30→60→90→180 days
+    if(!r.topic.nextReviewDate){
+      // First touch: schedule first review for tomorrow
+      r.topic.nextReviewDate=addDays(today,1);
+      r.topic.lastReviewDate=today;
+      r.topic.repetitions=r.topic.repetitions||0;
+      r.topic.interval=1;
+      showToast('📅 "'+r.topic.name+'" enrolled in revision cycle — review tomorrow!','info');
+    }
+
+    // If mastered stage ticked: apply full SM-2 progression
+    if(stageKey==='mastered'){
+      autoSpacedRepetition(r.topic);
+      showToast('🏆 Mastered! Next review in '+r.topic.interval+'d','success');
+    }
+  }
+
   saveState(); refreshTopicCard(topicId);
+  // Live-refresh home stats and heatmap if visible
+  try{if(currentView==='home'){renderHeatmap();renderStreakUI();renderHomeStats();renderDueToday();}}catch(e){}
   // Reverse-sync: update diary pills if diary view is open
   try{if(currentView==='diary') dvRefreshStagePills(topicId);}catch(e){}
 }
@@ -3011,6 +3074,19 @@ function toggleWeak(topicId){
   var r=findTopic(topicId); if(!r) return;
   r.topic.weakFlag=!r.topic.weakFlag; saveState(); refreshTopicCard(topicId);
   showToast(r.topic.weakFlag?'⚠️ Marked as weak':'✅ Weak flag removed','info');
+}
+function quickEnrollRevision(topicId){
+  var r=findTopic(topicId); if(!r) return;
+  var today=todayStr();
+  r.topic.nextReviewDate=addDays(today,1);
+  r.topic.lastReviewDate=today;
+  r.topic.interval=1;
+  r.topic.repetitions=r.topic.repetitions||0;
+  state.heatmap[today]=(state.heatmap[today]||0)+1;
+  trackWeeklyStudied(topicId); updateStreak(); saveState();
+  refreshTopicCard(topicId);
+  try{if(currentView==='home'){renderHeatmap();renderStreakUI();renderDueToday();}}catch(e){}
+  showToast('📅 "'+r.topic.name+'" enrolled! First review tomorrow — Day 1 of 8.','success');
 }
 function saveTopic(topicId,field,value){
   var r=findTopic(topicId); if(!r) return;
@@ -4342,9 +4418,8 @@ function dvRenderWeekRibbon() {
   var el = document.getElementById('dv-week-ribbon');
   if (!el) return;
   var today = todayStr();
-  // Show 7 days centered around today, extending to ±10 days
   var days = [];
-  for (var i = -6; i <= 6; i++) {
+  for (var i = -9; i <= 6; i++) {
     days.push(addDays(today, i));
   }
   el.innerHTML = days.map(function(d) {
@@ -4354,17 +4429,37 @@ function dvRenderWeekRibbon() {
     var dm = dt.getDate();
     var isToday = d === today;
     var isSelected = d === dvCurrentDate;
-    var dayData = state.v4Diary && state.v4Diary[d];
-    var hasTasks = dayData && dayData.tasks && dayData.tasks.length > 0;
+    var isPast = d < today;
+    var mergedTasks = dvGetMergedTasks(d);
+    var totalTasks = mergedTasks.length;
+    var doneTasks = mergedTasks.filter(function(t){ return t.completed; }).length;
+    var backlog = isPast && totalTasks > 0 && doneTasks < totalTasks;
+    var allDone = isPast && totalTasks > 0 && doneTasks === totalTasks;
     var revisedMap = state.diaryRevised && state.diaryRevised[d];
     var hasRevisions = revisedMap && Object.keys(revisedMap).length > 0;
-    var cls = 'dv-day-chip' + (isToday ? ' today' : '') + (isSelected ? ' selected' : '') + (hasTasks ? ' has-tasks' : '') + (hasRevisions ? ' has-revisions' : '');
+    var cls = 'dv-day-chip' +
+      (isToday ? ' today' : '') +
+      (isSelected ? ' selected' : '') +
+      (allDone ? ' day-all-done' : '') +
+      (backlog ? ' day-backlog' : '') +
+      (hasRevisions ? ' has-revisions' : '');
+    var statLine = '';
+    if (totalTasks > 0) {
+      if (backlog) {
+        statLine = '<div style="font-size:9px;color:var(--red);font-weight:700;margin-top:1px">' + doneTasks + '/' + totalTasks + '</div>';
+      } else if (allDone) {
+        statLine = '<div style="font-size:9px;color:var(--green);font-weight:700;margin-top:1px">✓ ' + totalTasks + '</div>';
+      } else if (isToday || !isPast) {
+        statLine = '<div style="font-size:9px;color:var(--primary);margin-top:1px">' + doneTasks + '/' + totalTasks + '</div>';
+      }
+    }
     return '<div class="' + cls + '" onclick="dvGoDate(\'' + d + '\')">' +
-      '<div style="font-size:10px">' + dn + '</div>' +
+      (hasRevisions ? '<div style="font-size:8px;line-height:1">🔁</div>' : '') +
+      '<div style="font-size:10px;opacity:0.7">' + dn + '</div>' +
       '<div style="font-size:13px;font-weight:700">' + dm + '</div>' +
+      statLine +
     '</div>';
   }).join('');
-  // Scroll selected into view
   setTimeout(function() {
     var selected = el.querySelector('.selected');
     if (selected) selected.scrollIntoView({block:'nearest', inline:'center', behavior:'smooth'});
@@ -4397,6 +4492,38 @@ function dvRenderTimeline() {
   var done = mergedTasks.filter(function(t) { return t.completed; }).length;
   if (progFill) progFill.style.width = total ? Math.round((done/total)*100) + '%' : '0%';
   if (progText) progText.textContent = done + ' / ' + total + ' tasks' + (total ? ' (' + Math.round((done/total)*100) + '%)' : '');
+
+  // Backlog banner for past days
+  var backlogBanner = document.getElementById('dv-backlog-banner');
+  if (!backlogBanner) {
+    backlogBanner = document.createElement('div');
+    backlogBanner.id = 'dv-backlog-banner';
+    backlogBanner.style.cssText = 'margin-bottom:12px;position:relative;z-index:1;';
+    tl.parentNode.insertBefore(backlogBanner, tl);
+  }
+  if (dvCurrentDate < today && total > 0) {
+    var missed = total - done;
+    if (missed > 0) {
+      backlogBanner.innerHTML = '<div style="background:rgba(255,71,87,0.08);border:1px solid rgba(255,71,87,0.25);border-radius:var(--r-sm);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+        '<span style="font-size:18px">📋</span>' +
+        '<div style="flex:1">' +
+          '<div style="font-family:var(--font-head);font-size:12px;font-weight:800;color:var(--red)">Backlog: ' + missed + ' unfinished task' + (missed !== 1 ? 's' : '') + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">' + done + ' of ' + total + ' completed on this day · ' + missed + ' carried forward</div>' +
+        '</div>' +
+        '<button class="btn btn-sm" style="font-size:11px;padding:5px 12px;border:1px solid rgba(255,71,87,0.4);color:var(--red);background:rgba(255,71,87,0.08);cursor:pointer;border-radius:var(--r-sm)" ' +
+          'onclick="dvMoveBacklogToToday()">Move to Today →</button>' +
+      '</div>';
+      backlogBanner.style.display = '';
+    } else {
+      backlogBanner.innerHTML = '<div style="background:rgba(6,255,165,0.06);border:1px solid rgba(6,255,165,0.2);border-radius:var(--r-sm);padding:8px 14px;display:flex;align-items:center;gap:8px">' +
+        '<span style="color:var(--green)">✅</span>' +
+        '<div style="font-size:12px;color:var(--green);font-weight:700">All ' + total + ' tasks completed on this day!</div>' +
+      '</div>';
+      backlogBanner.style.display = '';
+    }
+  } else {
+    backlogBanner.style.display = 'none';
+  }
 
   if (!total) {
     if (emptyState) emptyState.style.display = '';
@@ -5554,6 +5681,30 @@ function dvGetNextHour() {
   var parts = last.split(':');
   var h = parseInt(parts[0] || 8);
   return pad(Math.min(h + 1, 22)) + ':00';
+}
+
+function dvMoveBacklogToToday() {
+  var fromDate = dvCurrentDate;
+  var toDate = todayStr();
+  if (fromDate === toDate) return;
+  var fromData = dvGetDayData(fromDate);
+  var toData = dvGetDayData(toDate);
+  var incomplete = (fromData.tasks || []).filter(function(t){ return !t.completed; });
+  if (!incomplete.length) { showToast('No incomplete tasks to move!', 'info'); return; }
+  toData.tasks = toData.tasks || [];
+  incomplete.forEach(function(t) {
+    // Clone task, clear time so user re-schedules
+    var clone = JSON.parse(JSON.stringify(t));
+    clone.id = genId();
+    clone.time = '';
+    toData.tasks.push(clone);
+    // Remove from source
+    fromData.tasks = fromData.tasks.filter(function(ft){ return ft.id !== t.id; });
+  });
+  dvSaveDayData(fromDate, fromData);
+  dvSaveDayData(toDate, toData);
+  showToast('📋 ' + incomplete.length + ' task' + (incomplete.length!==1?'s':'') + ' moved to today!', 'success');
+  dvRenderView();
 }
 
 
