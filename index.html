@@ -1806,6 +1806,8 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
 
   <div class="stats-grid" id="home-stats-grid"></div>
 
+  <div id="perf-diagnostics-panel" style="margin-bottom:20px"></div>
+
   <div class="due-today-section" id="due-today-section">
     <div class="due-today-header">
       <div>
@@ -2470,7 +2472,22 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
   </div>
 </div>
 
-<!-- Restore Backup -->
+<!-- Duplicate Topic Warning -->
+<div class="modal-overlay" id="dup-warning-overlay" onclick="if(event.target===this)closeDuplicateWarning()">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeDuplicateWarning()">✕</button>
+    <div class="modal-title" style="color:var(--yellow)">⚠️ Possible Duplicate Found</div>
+    <div class="modal-subtitle">You're about to add <span id="dup-warning-name" style="color:var(--text);font-weight:600"></span> — similar topic(s) already exist:</div>
+    <div id="dup-warning-list" style="margin:12px 0"></div>
+    <div style="font-size:11px;color:var(--text-muted);background:var(--surface2);border-radius:var(--r-sm);padding:9px 12px;margin-bottom:4px">
+      💡 Duplicate topics split your revision history across two entries — each gets its own (weaker) spaced-repetition schedule instead of one strong one. Click a match above to open it instead, or confirm below if this is genuinely a different topic.
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeDuplicateWarning()">Cancel</button>
+      <button class="btn btn-primary" style="background:var(--yellow);color:#000" onclick="confirmAddDespiteDuplicate()">Add Anyway — It's Different</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="restore-overlay" onclick="if(event.target===this)closeRestore()">
   <div class="modal">
     <button class="modal-close" onclick="closeRestore()">✕</button>
@@ -2599,7 +2616,22 @@ var APP_KEY='medtrack_pro_v3_cmd';
 var STAGE_KEYS=['lectures','reading','notes','mcq','mastered'];
 var STAGE_LABELS={lectures:'Watch Lectures',reading:'Read Textbook',notes:'Make Notes',mcq:'Practice MCQs',mastered:'Topic Mastered'};
 var STAGE_ICONS={lectures:'📺',reading:'📖',notes:'✏️',mcq:'📝',mastered:'🏆'};
-var SR_INTERVALS=[1,3,7,14,30,60,90,180];
+// RIGID SCIENCE-BACKED SPACED REPETITION SCHEDULE
+// Based on Wozniak's SuperMemo research + Ebbinghaus Forgetting Curve.
+// Early reps are CLOSE TOGETHER (1,2,3,7) because new memories decay fastest
+// in the first 72 hours — this is the most-replicated finding in memory research.
+// Later reps space out exponentially once the memory trace is stable.
+var SR_INTERVALS=[1,2,3,7,14,30,60,120];
+var SR_RATIONALE=[
+  'Day 1: Re-encode within 24h — Ebbinghaus curve shows ~50-70% loss by this point without review.',
+  'Day 2: Second pass while trace is still fragile — cements initial encoding (Cepeda et al., 2006).',
+  'Day 3: Third touch closes the "forgetting window" — most learners lose <20% by now if reps 1-2 were done.',
+  'Day 7: One-week test — the classic spacing effect checkpoint. Surviving this = short-term mastery.',
+  'Day 14: Two-week recall — tests transfer to working long-term memory.',
+  'Day 30: One-month recall — this is the actual exam-readiness checkpoint for most MBBS papers.',
+  'Day 60: Two-month maintenance — prevents finals-season decay.',
+  'Day 120: Four-month — long-term retention for boards/comprehensive exams.'
+];
 var MOTIVATIONAL_QUOTES=[
   {text:"The secret of getting ahead is getting started.",author:"Mark Twain"},
   {text:"Success is the sum of small efforts, repeated day in and day out.",author:"Robert Collier"},
@@ -2634,7 +2666,8 @@ var state={
   plannerTasks:[],revisionSession:{active:false},weeklyStudied:{},
   dailySchedule:{date:null,dayTitle:'',items:[],completedIds:[],microChecks:{}},
   diaryRevised:{},
-  mclChecks:{}
+  mclChecks:{},
+  settings:{dailyCapacity:6}
 };
 
 function patchTree(folders,parentId){
@@ -2645,6 +2678,11 @@ function patchTree(folders,parentId){
     f.topics.forEach(function(t){
       t.parentId=f.id; t.starred=t.starred||false;
       t.links=t.links||[]; t.stages=t.stages||{lectures:false,reading:false,notes:false,mcq:false,mastered:false};
+      t.mcqScoreHistory=t.mcqScoreHistory||[];
+      if(t.mcqScore===undefined) t.mcqScore=null;
+      t.weakFlag=t.weakFlag||false;
+      t.repetitions=t.repetitions||0;
+      t.interval=t.interval||0;
     });
     patchTree(f.subfolders,f.id);
   });
@@ -2690,6 +2728,7 @@ function loadState(){
     state.dailySchedule.microChecks=state.dailySchedule.microChecks||{};
     state.diaryRevised=state.diaryRevised||{};
     state.mclChecks=state.mclChecks||{};
+    state.settings=state.settings||{dailyCapacity:6};
     patchTree(state.folders);
   }catch(e){console.error('Load failed',e);}
 }
@@ -2698,7 +2737,7 @@ function createTopicData(title,parentId,opts){
   return{id:genId(),name:title,parentId:parentId,difficulty:opts.difficulty||'medium',weightage:opts.weightage||2,
     tags:opts.tags||[],starred:false,stages:{lectures:false,reading:false,notes:false,mcq:false,mastered:false},
     notes:'',resources:{book:'',video:''},links:[],interval:0,repetitions:0,
-    lastReviewDate:null,nextReviewDate:null,mcqScore:null,weakFlag:false,createdAt:todayStr()};
+    lastReviewDate:null,nextReviewDate:null,mcqScore:null,mcqScoreHistory:[],weakFlag:false,createdAt:todayStr()};
 }
 
 // ─────────────────────────────────────────────
@@ -2711,6 +2750,61 @@ function addDays(ds,n){var d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+n);r
 function fmtHrsMin(s){var h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return h>0?h+'h '+m+'m':m+'m';}
 function fmtSec(s){var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;return pad(h)+':'+pad(m)+':'+pad(ss);}
 function getTopicCompletion(t){return Math.round((STAGE_KEYS.filter(function(k){return t.stages[k];}).length/STAGE_KEYS.length)*100);}
+
+// ─────────────────────────────────────────────
+//  DUPLICATE TOPIC FINDER
+// ─────────────────────────────────────────────
+// Normalizes a topic name for comparison: lowercase, strip punctuation,
+// collapse whitespace, drop common filler words so "GFR & Filtration"
+// and "gfr and filtration barrier" are recognized as likely duplicates.
+function normalizeTopicName(s){
+  return (s||'').toLowerCase()
+    .replace(/[&/,.\-_()]/g,' ')
+    .replace(/\b(and|the|of|in|a|an|to|for)\b/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+// Classic Levenshtein edit distance — small, fast, no deps.
+function levenshtein(a,b){
+  if(a===b) return 0;
+  var al=a.length, bl=b.length;
+  if(!al) return bl; if(!bl) return al;
+  var prev=new Array(bl+1); for(var j=0;j<=bl;j++) prev[j]=j;
+  for(var i=1;i<=al;i++){
+    var cur=[i];
+    for(var j2=1;j2<=bl;j2++){
+      var cost=a[i-1]===b[j2-1]?0:1;
+      cur[j2]=Math.min(prev[j2]+1,cur[j2-1]+1,prev[j2-1]+cost);
+    }
+    prev=cur;
+  }
+  return prev[bl];
+}
+// Similarity 0-1 (1 = identical). Combines exact-substring boost with
+// edit-distance ratio so both "typo near-matches" and "contains/is-contained-in"
+// cases are caught (e.g. "Cardiac Cycle" vs "The Cardiac Cycle Phases").
+function nameSimilarity(a,b){
+  var na=normalizeTopicName(a), nb=normalizeTopicName(b);
+  if(!na||!nb) return 0;
+  if(na===nb) return 1;
+  if(na.indexOf(nb)>=0||nb.indexOf(na)>=0){
+    var shorter=Math.min(na.length,nb.length), longer=Math.max(na.length,nb.length);
+    return 0.75+0.2*(shorter/longer); // strong but not perfect match
+  }
+  var dist=levenshtein(na,nb);
+  var maxLen=Math.max(na.length,nb.length);
+  return maxLen?1-(dist/maxLen):0;
+}
+// Searches ALL topics app-wide (not just current folder) for likely duplicates.
+// Returns matches sorted by similarity, threshold tunable by caller.
+function findDuplicateTopics(name,threshold){
+  threshold=threshold||0.62;
+  var all=getAllTopics();
+  var matches=all.map(function(x){return {topic:x.topic,folder:x.folder,score:nameSimilarity(name,x.topic.name)};})
+    .filter(function(m){return m.score>=threshold;})
+    .sort(function(a,b){return b.score-a.score;});
+  return matches;
+}
 function calcNextInterval(t){return SR_INTERVALS[Math.min(t.repetitions||0,SR_INTERVALS.length-1)];}
 function autoSpacedRepetition(topic, skipHeatmap){
   var reps=topic.repetitions||0,interval=SR_INTERVALS[Math.min(reps,SR_INTERVALS.length-1)],today=todayStr();
@@ -2719,6 +2813,48 @@ function autoSpacedRepetition(topic, skipHeatmap){
   trackWeeklyStudied(topic.id); updateStreak(); saveState();
 }
 function getDueTopics(){var t=todayStr();return getAllTopics().filter(function(x){return x.topic.nextReviewDate&&x.topic.nextReviewDate<=t;});}
+
+// ─────────────────────────────────────────────
+//  DAILY CAPACITY ENGINE (science-backed load limiting)
+// ─────────────────────────────────────────────
+// Rationale: Miller's Law (7±2 items in working memory) and cognitive load
+// research (Sweller) show that cramming too many NEW or DEEP topics in one
+// day causes shallow processing and rapid forgetting — the opposite of what
+// spaced repetition is for. We cap "deep/effortful" revision slots per day
+// and let true overflow roll forward automatically, ranked by urgency.
+var DAILY_CAPACITY_DEFAULT = 6; // max deep revision items/day for most learners
+function getDailyCapacity(){
+  return (state.settings&&state.settings.dailyCapacity)||DAILY_CAPACITY_DEFAULT;
+}
+function setDailyCapacity(n){
+  state.settings=state.settings||{}; state.settings.dailyCapacity=Math.max(3,Math.min(15,+n||DAILY_CAPACITY_DEFAULT));
+  saveState();
+}
+// Returns {today:[...], overflow:[...]} — ranked by urgency so the most
+// important things always make the cut, and the rest roll to tomorrow
+// automatically (interleaving across days is itself a research-backed
+// technique — Rohrer & Pashler 2010 — rather than a workaround).
+function getPrioritizedDueTopics(){
+  var due=getDueTopics();
+  var today=todayStr();
+  due.sort(function(a,b){
+    var ta=a.topic,tb=b.topic;
+    // 1. Overdue topics (especially Step 1-3, fresh + fragile) come first
+    var aOverdueDays = ta.nextReviewDate < today ? (new Date(today) - new Date(ta.nextReviewDate))/86400000 : 0;
+    var bOverdueDays = tb.nextReviewDate < today ? (new Date(today) - new Date(tb.nextReviewDate))/86400000 : 0;
+    // 2. Weak-flagged topics get priority (they need the practice most)
+    var aWeak = ta.weakFlag ? 1 : 0, bWeak = tb.weakFlag ? 1 : 0;
+    // 3. Early-step topics (reps 0-3) are time-critical — the forgetting
+    //    curve is steepest here, so a missed early review is costlier
+    //    than a missed late one (Day 60/120 topics are already stable).
+    var aEarly = (ta.repetitions||0) <= 3 ? 1 : 0, bEarly = (tb.repetitions||0) <= 3 ? 1 : 0;
+    var aScore = aOverdueDays*3 + aWeak*5 + aEarly*4;
+    var bScore = bOverdueDays*3 + bWeak*5 + bEarly*4;
+    return bScore - aScore;
+  });
+  var cap = getDailyCapacity();
+  return { today: due.slice(0, cap), overflow: due.slice(cap), total: due.length, cap: cap };
+}
 function getNextReviewLabel(topic){
   if(!topic.nextReviewDate) return null; var t=todayStr();
   if(topic.nextReviewDate<t) return{label:'Overdue',cls:'overdue'};
@@ -2807,9 +2943,107 @@ function renderHome(){
   try{renderStreakUI();}catch(e){}
   try{renderReminders();}catch(e){}
   try{renderDailySchedule();}catch(e){}
+  try{renderPerfDiagnostics();}catch(e){}
   var ws=document.getElementById('why-started-input'); if(ws) ws.value=state.whyStarted||'';
   var tog=document.getElementById('islamic-toggle'); if(tog) tog.classList.toggle('on',!!state.islamicOn);
   if(state.islamicOn) showIslamicReminder();
+}
+
+// ─────────────────────────────────────────────
+//  PERFORMANCE DIAGNOSTICS — "why am I not improving"
+// ─────────────────────────────────────────────
+// Analyzes the gap between STUDY ACTIVITY (stages ticked, reps done) and
+// ACTUAL PERFORMANCE (MCQ scores) to detect the most common reasons
+// students plateau despite consistent study: recognition-vs-recall gap,
+// premature mastery marking, surface-level coverage, and missed reviews.
+function renderPerfDiagnostics(){
+  var el=document.getElementById('perf-diagnostics-panel'); if(!el) return;
+  var all=getAllTopics();
+  if(!all.length){el.innerHTML='';return;}
+
+  var withScores=all.filter(function(x){return x.topic.mcqScore!==null&&x.topic.mcqScore!==undefined;});
+  var mastered=all.filter(function(x){return x.topic.stages.mastered;});
+  var masteredWithLowScore=mastered.filter(function(x){return x.topic.mcqScore!==null&&x.topic.mcqScore<60;});
+  var masteredNoScore=mastered.filter(function(x){return x.topic.mcqScore===null||x.topic.mcqScore===undefined;});
+  var avgScore=withScores.length?Math.round(withScores.reduce(function(s,x){return s+x.topic.mcqScore;},0)/withScores.length):null;
+  var overdueCount=all.filter(function(x){return x.topic.nextReviewDate&&x.topic.nextReviewDate<todayStr();}).length;
+  var lowRepHighStage=all.filter(function(x){var t=x.topic;return t.stages.mastered&&(t.repetitions||0)<2;}).length;
+
+  // Build diagnosis list — each one is a concrete, evidence-based finding
+  var diagnoses=[];
+
+  if(masteredNoScore.length>0 && mastered.length>0 && (masteredNoScore.length/mastered.length)>0.4){
+    diagnoses.push({
+      icon:'🎭', title:'Recognition ≠ Recall gap',
+      sev:'high',
+      body:masteredNoScore.length+' of '+mastered.length+' "Mastered" topics have NEVER been tested with MCQs. Feeling confident after reading/notes is <b>recognition memory</b> — exams test <b>recall memory</b>, which is a different and harder skill (Brown & Craik, 2000). This is the #1 reason students feel prepared but underperform.',
+      fix:'Before marking anything "Mastered", solve at least 10 MCQs on it cold. If you score below 70%, the topic is NOT mastered — re-open it.'
+    });
+  }
+  if(masteredWithLowScore.length>0){
+    diagnoses.push({
+      icon:'⚠️', title:'False mastery detected',
+      sev:'high',
+      body:masteredWithLowScore.length+' topic'+(masteredWithLowScore.length!==1?'s are':' is')+' marked "Mastered" but scoring under 60% on MCQs. Marking mastery based on completing stages (read/notes/lectures) instead of test performance creates a false sense of security that breaks down exactly when it matters — in the exam hall.',
+      fix:'Un-mark these as mastered. Treat the low MCQ score as your real signal, not the checkbox.'
+    });
+  }
+  if(lowRepHighStage>0){
+    diagnoses.push({
+      icon:'⏩', title:'Skipping the repetition ladder',
+      sev:'med',
+      body:lowRepHighStage+' topic'+(lowRepHighStage!==1?'s were':' was')+' marked Mastered after fewer than 2 spaced repetitions. A single study session — no matter how thorough — does not survive the forgetting curve. Long-term retention requires the SPACING, not just the initial depth.',
+      fix:'Mastery should be earned through the revision ladder (Steps 1→2→3→7…), not granted on day one. Let topics go through at least 3 rigid review cycles before considering them stable.'
+    });
+  }
+  if(overdueCount>5){
+    diagnoses.push({
+      icon:'📉', title:'Overdue backlog is degrading retention',
+      sev:'high',
+      body:overdueCount+' topics are overdue for review. Every day past the scheduled date means MORE forgetting — the curve doesn\'t pause for you. An overdue Day-2 topic decays faster than an overdue Day-60 topic, so backlog compounds against your weakest, newest material first.',
+      fix:'Use the Daily Capacity cap to clear backlog gradually instead of cramming it all back in — 6 focused topics/day beats 20 rushed ones.'
+    });
+  }
+  if(withScores.length>=5 && avgScore!==null && avgScore<65){
+    diagnoses.push({
+      icon:'🎯', title:'Average MCQ score is below exam-safe threshold',
+      sev:'high',
+      body:'Your average logged MCQ score is <b>'+avgScore+'%</b> across '+withScores.length+' tested topics. Most MBBS exams require ~60-70% to comfortably pass, meaning your CURRENT retention is right at the margin — consistent with "barely passing."',
+      fix:'Shift time from passive stages (reading, watching lectures again) to active retrieval (MCQs, blank-page recall, teaching aloud). Research consistently shows retrieval practice produces 2x the retention of re-reading for the same time invested (Roediger & Karpicke, 2006).'
+    });
+  }
+  if(withScores.length<all.length*0.3 && all.length>=5){
+    diagnoses.push({
+      icon:'📝', title:'Not enough topics are being tested',
+      sev:'med',
+      body:'Only '+withScores.length+' of '+all.length+' topics have an MCQ score logged. Without testing, you have no real signal on which topics are actually exam-ready — progress tracking becomes guesswork based on time spent, not knowledge gained.',
+      fix:'Log an MCQ score for every topic after each revision step — even a rough self-test. It takes 5 minutes and tells you the truth about where you stand.'
+    });
+  }
+
+  if(!diagnoses.length){
+    if(withScores.length>=3 && avgScore!==null && avgScore>=70){
+      el.innerHTML='<div class="dsb-card" style="border-color:rgba(6,255,165,0.25);background:linear-gradient(135deg,rgba(6,255,165,0.05),rgba(0,210,190,0.03))"><div class="dsb-card-title" style="color:var(--green)">✅ Performance Diagnostics</div><div style="font-size:12px;color:var(--text-muted)">Average MCQ score: <b style="color:var(--green)">'+avgScore+'%</b> across '+withScores.length+' tested topics. No major red flags detected — keep following the rigid revision ladder and logging scores.</div></div>';
+    } else {
+      el.innerHTML='';
+    }
+    return;
+  }
+
+  diagnoses.sort(function(a,b){var w={high:2,med:1,low:0};return w[b.sev]-w[a.sev];});
+
+  el.innerHTML='<div class="dsb-card" style="border-color:rgba(255,71,87,0.2)">'+
+    '<div class="dsb-card-title" style="color:var(--red)">🩺 Performance Diagnostics — Why marks may be low</div>'+
+    '<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Based on your actual study + MCQ data (not just activity). '+diagnoses.length+' finding'+(diagnoses.length!==1?'s':'')+' detected.</div>'+
+    diagnoses.map(function(d){
+      var sevColor=d.sev==='high'?'var(--red)':d.sev==='med'?'var(--yellow)':'var(--primary)';
+      return '<div style="background:var(--surface);border:1px solid var(--border2);border-left:3px solid '+sevColor+';border-radius:var(--r-sm);padding:11px 14px;margin-bottom:8px">'+
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="font-size:16px">'+d.icon+'</span><span style="font-weight:700;font-size:13px;font-family:var(--font-head)">'+d.title+'</span></div>'+
+        '<div style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:7px">'+d.body+'</div>'+
+        '<div style="font-size:12px;background:var(--surface2);border-radius:6px;padding:7px 10px;color:var(--text)"><b style="color:'+sevColor+'">→ Fix:</b> '+d.fix+'</div>'+
+      '</div>';
+    }).join('')+
+  '</div>';
 }
 function renderBoosterPanel(){
   var h=new Date().getHours(), greet=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
@@ -2867,15 +3101,31 @@ function showIslamicReminder(){
   el.style.display='inline';
 }
 function renderDueToday(){
-  var due=getDueTopics(),cnt=document.getElementById('due-today-count'),list=document.getElementById('due-today-list');
-  if(cnt) cnt.textContent=due.length; if(!list) return;
-  if(!due.length){list.innerHTML='<div style="color:var(--text-muted);font-size:12px">All caught up! No reviews due today 🎉</div>';return;}
+  var pri=getPrioritizedDueTopics();
+  var cnt=document.getElementById('due-today-count'),list=document.getElementById('due-today-list');
+  if(cnt) cnt.textContent=pri.today.length+(pri.overflow.length?'+':'');
+  if(!list) return;
+  if(!pri.total){list.innerHTML='<div style="color:var(--text-muted);font-size:12px">All caught up! No reviews due today 🎉</div>';return;}
   var today=todayStr();
-  list.innerHTML=due.slice(0,12).map(function(x){
+  var html=pri.today.map(function(x){
     var t=x.topic,f=x.folder,nm=t.name.length>30?t.name.slice(0,28)+'…':t.name;
     return '<div class="due-topic-pill '+(t.nextReviewDate<today?'overdue':'')+'" onclick="goToTopic(\''+t.id+'\')">'+nm+' <span style="font-size:10px;opacity:0.7">'+f.name+'</span></div>';
   }).join('');
-  if(due.length>12) list.innerHTML+='<div class="due-topic-pill" onclick="startRevisionSession()">+'+(due.length-12)+' more →</div>';
+  if(pri.overflow.length){
+    html+='<div style="width:100%;margin-top:8px;padding:8px 12px;background:var(--surface2);border:1px dashed var(--border2);border-radius:var(--r-sm);font-size:11px;color:var(--text-muted)">'+
+      '📦 <b style="color:var(--yellow)">'+pri.overflow.length+' more</b> deferred to keep today realistic (cap: '+pri.cap+'/day). They\'ll auto-surface tomorrow, prioritized by urgency — this is intentional, not a bug. <button class="btn btn-ghost btn-sm" onclick="openCapacitySettings()" style="margin-left:4px">⚙️ Adjust cap</button>'+
+    '</div>';
+  }
+  list.innerHTML=html;
+}
+function openCapacitySettings(){
+  var cur=getDailyCapacity();
+  var n=prompt('Daily revision capacity (how many topics max per day)?\n\nResearch-backed range: 4-8 for most learners (Miller\'s Law: working memory holds ~7±2 items). Lower = deeper focus per topic, higher = broader coverage but shallower.',cur);
+  if(n===null) return;
+  setDailyCapacity(n);
+  showToast('📊 Daily capacity set to '+getDailyCapacity()+' topics/day','success');
+  try{renderDueToday();}catch(e){}
+  try{dvRenderRevisionSection();}catch(e){}
 }
 function renderHeatmap(){
   var grid=document.getElementById('heatmap-grid'); if(!grid) return;
@@ -3021,15 +3271,14 @@ function buildTopicCard(topic){
 }
 function buildTopicBody(topic){
   var stagesHtml=STAGE_KEYS.map(function(k){return '<div class="stage-item '+(topic.stages[k]?'done':'')+' '+(k==='mastered'?'stage-mastered':'')+'" onclick="toggleStage(\''+topic.id+'\',\''+k+'\')"><div class="stage-checkbox">'+(topic.stages[k]?'✓':'')+'</div><span class="stage-label">'+STAGE_ICONS[k]+' '+STAGE_LABELS[k]+'</span></div>';}).join('');
-  // ── SM-2 REVISION CYCLE DISPLAY ─────────────────────────────────
+  // ── RIGID SM-2 REVISION CYCLE DISPLAY ─────────────────────────────────
   var reps=topic.repetitions||0;
-  var SR_LABELS=['Day 1','Day 3','Day 7','Day 14','Day 30','Day 60','Day 90','Day 180'];
-  var SR_WHY=['First recall (Ebbinghaus curve peaks at 24h)','Short-gap reinforcement (3-day consolidation window)','Weekly review (long-term potentiation solidifies)','Bi-weekly check (transfers to long-term memory)','Monthly review (maintains retrieval strength)','2-month recall (near-permanent encoding)','3-month check (expert-level fluency)','6-month maintenance (lifetime retention)'];
+  var SR_LABELS=['Day 1','Day 2','Day 3','Day 7','Day 14','Day 30','Day 60','Day 120'];
   var cycleDotsHtml=SR_INTERVALS.slice(0,8).map(function(iv,i){
     var done=reps>i;var active=reps===i&&topic.nextReviewDate;
     var dotColor=done?'var(--green)':active?'var(--primary)':'var(--border2)';
     var textColor=done?'var(--green)':active?'var(--primary)':'var(--text-dim)';
-    return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:0" title="'+SR_WHY[i]+'">' +
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:0" title="'+SR_RATIONALE[i]+'">' +
       '<div style="width:22px;height:22px;border-radius:50%;border:2px solid '+dotColor+';background:'+(done?'var(--green)':active?'var(--primary-dim)':'var(--surface3)')+';display:flex;align-items:center;justify-content:center;font-size:10px;color:'+(done?'#000':dotColor)+';transition:all .2s">'+(done?'✓':i+1)+'</div>'+
       '<div style="font-size:9px;color:'+textColor+';text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:36px">'+SR_LABELS[i]+'</div>'+
     '</div>';
@@ -3037,11 +3286,11 @@ function buildTopicBody(topic){
   var nextLabel=topic.nextReviewDate?(topic.nextReviewDate<=todayStr()?'<span style="color:var(--red);font-weight:700">⚠️ Overdue</span>':'<span style="color:var(--primary)">📅 '+topic.nextReviewDate+'</span>'):'<span style="color:var(--text-muted)">Tick any stage to enroll</span>';
   var sm2Html='<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);padding:12px">' +
     // Cycle track
-    '<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📅 Your Revision Schedule — SM-2 Algorithm</div>'+
+    '<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📅 Fixed Revision Ladder — 1·2·3·7·14·30·60·120 days</div>'+
     '<div style="display:flex;align-items:center;gap:0;margin-bottom:12px;overflow-x:auto;padding-bottom:4px">'+cycleDotsHtml+'</div>'+
     // Status row
     '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px;padding-top:8px;border-top:1px solid var(--border2)">' +
-      '<span>Rep: <b style="color:var(--primary)">'+(reps||0)+'/'+(SR_INTERVALS.length)+'</b></span>'+
+      '<span>Step: <b style="color:var(--primary)">'+(reps||0)+'/'+(SR_INTERVALS.length)+'</b></span>'+
       '<span>Interval: <b style="color:var(--primary)">'+(topic.interval||'—')+'d</b></span>'+
       '<span>Next: '+nextLabel+'</span>'+
       (topic.lastReviewDate?'<span style="color:var(--text-muted)">Last: '+topic.lastReviewDate+'</span>':'')+
@@ -3052,11 +3301,37 @@ function buildTopicBody(topic){
       (!topic.nextReviewDate?'<button class="btn btn-secondary btn-sm" onclick="quickEnrollRevision(\''+topic.id+'\')" style="flex:1">📅 Enroll in Revision Cycle</button>':'')+
     '</div>'+
     '<div style="font-size:10px;color:var(--text-dim);margin-top:6px;line-height:1.5">'+
-      '💡 <b>How it works:</b> Tick any stage above to auto-enroll. As you confirm revisions, the interval doubles (1→3→7→14→30→60→90→180 days). Based on Ebbinghaus Forgetting Curve + SM-2 spaced repetition algorithm.'+
+      '💡 <b>Why it\'s rigid:</b> Each step is FIXED — even if a topic feels easy, the ladder advances by exactly one step at a time (1→2→3→7→14→30→60→120 days). The first 3 reviews are deliberately close together because that\'s when the Ebbinghaus forgetting curve is steepest. A failed recall (😵/😓) always resets to Step 1 — partial credit does not exist in real exams, so it should not exist here either.'+
     '</div>'+
   '</div>';
   var notesHtml='<textarea class="notes-textarea" placeholder="Your notes on this topic..." oninput="saveTopic(\''+topic.id+'\',\'notes\',this.value)">'+(topic.notes||'')+'</textarea>';
-  var mcqHtml='<div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap"><span style="font-size:12px;color:var(--text-muted)">MCQ Score:</span><input type="number" min="0" max="100" value="'+(topic.mcqScore||'')+'" placeholder="%" style="width:70px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:4px 8px;color:var(--text);font-size:12px;outline:none" oninput="saveTopic(\''+topic.id+'\',\'mcqScore\',+this.value||null)"><button class="btn btn-ghost btn-sm" onclick="toggleWeak(\''+topic.id+'\')">⚠️ '+(topic.weakFlag?'Remove Weak Flag':'Flag as Weak')+'</button><button class="btn btn-secondary btn-sm" onclick="openMoveTopic(\''+topic.id+'\')" style="margin-left:auto">📦 Move</button></div>';
+  var mcqHist=topic.mcqScoreHistory||[];
+  var mcqTrendHtml='';
+  if(mcqHist.length>=2){
+    var last=mcqHist[mcqHist.length-1].score,prev=mcqHist[mcqHist.length-2].score;
+    var diff=last-prev;
+    var trendIcon=diff>0?'📈':diff<0?'📉':'➡️';
+    var trendColor=diff>0?'var(--green)':diff<0?'var(--red)':'var(--text-muted)';
+    mcqTrendHtml='<span style="color:'+trendColor+';font-size:11px;font-weight:700">'+trendIcon+' '+(diff>0?'+':'')+diff+'%</span>';
+  }
+  // Diagnostic: high reps but low/no MCQ score = "false mastery" risk
+  var falseMasteryWarn='';
+  if((topic.repetitions||0)>=3 && (topic.mcqScore===null || topic.mcqScore<60)){
+    falseMasteryWarn='<div style="font-size:10px;color:var(--yellow);background:var(--yellow-dim);border:1px solid rgba(255,179,64,.3);border-radius:6px;padding:6px 9px;margin-top:6px">⚠️ <b>False-mastery risk:</b> '+(topic.repetitions||0)+' revision steps done but '+(topic.mcqScore===null?'no MCQ score logged':'MCQ score is only '+topic.mcqScore+'%')+'. Recognizing notes ≠ recalling under exam pressure. Test yourself with MCQs before marking this Mastered.</div>';
+  }
+  var mcqHtml='<div style="margin-top:8px">'+
+    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
+      '<span style="font-size:12px;color:var(--text-muted)">MCQ Score:</span>'+
+      '<input type="number" min="0" max="100" id="mcqsc-'+topic.id+'" placeholder="%" style="width:70px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:4px 8px;color:var(--text);font-size:12px;outline:none">'+
+      '<button class="btn btn-ghost btn-sm" onclick="logMcqScore(\''+topic.id+'\')">+ Log Score</button>'+
+      (topic.mcqScore!==null?'<span style="font-family:var(--font-mono);font-size:12px;color:var(--primary);font-weight:700">Latest: '+topic.mcqScore+'%</span>':'')+
+      mcqTrendHtml+
+      '<button class="btn btn-ghost btn-sm" onclick="toggleWeak(\''+topic.id+'\')">⚠️ '+(topic.weakFlag?'Remove Weak Flag':'Flag as Weak')+'</button>'+
+      '<button class="btn btn-secondary btn-sm" onclick="openMoveTopic(\''+topic.id+'\')" style="margin-left:auto">📦 Move</button>'+
+    '</div>'+
+    (mcqHist.length?'<div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">'+mcqHist.slice(-8).map(function(h){return '<span style="font-size:9px;font-family:var(--font-mono);background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:1px 6px;color:'+(h.score>=70?'var(--green)':h.score>=50?'var(--yellow)':'var(--red)')+'">'+h.score+'% · '+h.date.slice(5)+'</span>';}).join('')+'</div>':'')+
+    falseMasteryWarn+
+  '</div>';
   var linksHtml=(topic.links||[]).map(function(l,i){
     var url=l.url||'';
     var title=l.title||url;
@@ -3143,6 +3418,20 @@ function toggleStar(topicId){
   r.topic.starred=!r.topic.starred; saveState(); refreshTopicCard(topicId);
   showToast(r.topic.starred?'⭐ Topic starred':'☆ Star removed','info');
 }
+function logMcqScore(topicId){
+  var input=document.getElementById('mcqsc-'+topicId); if(!input) return;
+  var val=+input.value;
+  if(!input.value||isNaN(val)||val<0||val>100){showToast('Enter a score 0-100','error');return;}
+  var r=findTopic(topicId); if(!r) return;
+  var t=r.topic;
+  t.mcqScore=val;
+  t.mcqScoreHistory=t.mcqScoreHistory||[];
+  t.mcqScoreHistory.push({score:val,date:todayStr()});
+  // Auto weak-flag if score is consistently low
+  if(val<50) t.weakFlag=true;
+  saveState(); refreshTopicCard(topicId);
+  showToast('📊 Logged '+val+'% for "'+t.name+'"'+(val<50?' — flagged as weak':''),val<50?'warn':'success');
+}
 function toggleWeak(topicId){
   var r=findTopic(topicId); if(!r) return;
   r.topic.weakFlag=!r.topic.weakFlag; saveState(); refreshTopicCard(topicId);
@@ -3189,8 +3478,27 @@ function removeLink(topicId,idx){
 function deleteTopic(topicId){
   if(!confirm('Delete this topic? This cannot be undone.')) return;
   var r=findTopic(topicId); if(!r) return;
+  var topicName=r.topic.name;
   r.folder.topics=r.folder.topics.filter(function(t){return t.id!==topicId;});
-  saveState(); if(currentView==='subfolder') renderSubfolderView(); showToast('Topic deleted','warn');
+
+  // Clean up dangling references so other parts of the app don't break
+  // silently when they look this topic up later.
+  if(state.diaryRevised){
+    Object.keys(state.diaryRevised).forEach(function(d){delete state.diaryRevised[d][topicId];});
+  }
+  if(state.mclChecks){
+    Object.keys(state.mclChecks).forEach(function(d){delete state.mclChecks[d][topicId];});
+  }
+  // Remove diary tasks linked to this topic (across all days) — they'd
+  // otherwise show a broken "🔗 linked topic" badge pointing nowhere.
+  if(state.v4Diary){
+    Object.keys(state.v4Diary).forEach(function(d){
+      var day=state.v4Diary[d];
+      if(day&&day.tasks) day.tasks=day.tasks.filter(function(t){return t.topicId!==topicId;});
+    });
+  }
+
+  saveState(); if(currentView==='subfolder') renderSubfolderView(); showToast('🗑️ "'+topicName+'" deleted','warn');
 }
 function refreshTopicCard(topicId){
   var card=document.getElementById('tc-'+topicId),body=document.getElementById('tb-'+topicId);
@@ -3278,9 +3586,13 @@ function openEditFolder(fid){
 function deleteFolder(fid){
   var f=findFolder(fid); if(!f) return;
   if(!confirm('Delete folder "'+f.name+'" and ALL nested contents? This cannot be undone.')) return;
+  var wasViewingDescendant = currentFolderId && (currentFolderId===fid || _isFolderDescendant(f,currentFolderId));
   if(f.parentId){var p=findFolder(f.parentId);if(p)p.subfolders=p.subfolders.filter(function(x){return x.id!==fid;});}
   else state.folders=state.folders.filter(function(x){return x.id!==fid;});
-  saveState(); if(currentFolderId===fid)goBackFromSubfolder();else if(currentFolderId)renderSubfolderView();else renderFolders();
+  saveState();
+  if(wasViewingDescendant){currentFolderId=null;showView('folders');}
+  else if(currentFolderId) renderSubfolderView();
+  else renderFolders();
   showToast('Folder deleted','warn');
 }
 function openAddSubfolder(){
@@ -3316,14 +3628,56 @@ function openAddTopic(){
   document.getElementById('add-topic-name').value=''; document.getElementById('add-topic-difficulty').value='medium';
   document.getElementById('add-topic-weightage').value=2; document.getElementById('add-topic-tags').value='';
   document.getElementById('add-topic-overlay').classList.add('show');
+  setTimeout(function(){var n=document.getElementById('add-topic-name');if(n)n.focus();},100);
 }
 function closeAddTopic(){document.getElementById('add-topic-overlay').classList.remove('show');}
+var _pendingTopicAdd=null;
 function saveAddTopic(){
   var name=document.getElementById('add-topic-name').value.trim(); if(!name){showToast('Topic name required','error');return;}
   var f=findFolder(currentFolderId); if(!f) return;
   var tags=document.getElementById('add-topic-tags').value.split(',').map(function(t){return t.trim();}).filter(Boolean);
-  var topic=createTopicData(name,currentFolderId,{difficulty:document.getElementById('add-topic-difficulty').value,weightage:+document.getElementById('add-topic-weightage').value||2,tags:tags});
-  f.topics.push(topic); saveState(); closeAddTopic(); renderSubfolderView(); showToast('Topic "'+name+'" added','success');
+  var opts={difficulty:document.getElementById('add-topic-difficulty').value,weightage:+document.getElementById('add-topic-weightage').value||2,tags:tags};
+
+  // ── DUPLICATE CHECK — search ALL topics app-wide before adding ──
+  var dupes=findDuplicateTopics(name);
+  if(dupes.length){
+    _pendingTopicAdd={name:name,folderId:currentFolderId,opts:opts};
+    showDuplicateWarning(dupes,name);
+    return;
+  }
+  _createTopicNow(name,currentFolderId,opts);
+}
+function _createTopicNow(name,folderId,opts){
+  var f=findFolder(folderId); if(!f) return;
+  var topic=createTopicData(name,folderId,opts);
+  f.topics.push(topic); saveState();
+  closeAddTopic(); closeDuplicateWarning();
+  if(currentView==='subfolder') renderSubfolderView();
+  showToast('Topic "'+name+'" added','success');
+}
+function showDuplicateWarning(dupes,name){
+  var modal=document.getElementById('dup-warning-overlay'); if(!modal) return;
+  document.getElementById('dup-warning-name').textContent='"'+name+'"';
+  var list=document.getElementById('dup-warning-list');
+  list.innerHTML=dupes.slice(0,5).map(function(m){
+    var pct=Math.round(m.score*100);
+    var sevColor=pct>=90?'var(--red)':pct>=75?'var(--yellow)':'var(--text-muted)';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-sm);margin-bottom:6px;cursor:pointer" onclick="goToTopic(\''+m.topic.id+'\')">'+
+      '<span style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:'+sevColor+';min-width:38px">'+pct+'%</span>'+
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">'+m.topic.name+'</div><div style="font-size:11px;color:var(--text-muted)">'+(m.folder.icon||'📂')+' '+m.folder.name+' · '+getTopicCompletion(m.topic)+'% complete'+(m.topic.repetitions?' · Step '+m.topic.repetitions:'')+'</div></div>'+
+      '<span style="font-size:11px;color:var(--primary)">View →</span>'+
+    '</div>';
+  }).join('');
+  modal.classList.add('show');
+}
+function closeDuplicateWarning(){
+  var modal=document.getElementById('dup-warning-overlay'); if(modal) modal.classList.remove('show');
+  _pendingTopicAdd=null;
+}
+function confirmAddDespiteDuplicate(){
+  if(!_pendingTopicAdd) return;
+  var p=_pendingTopicAdd;
+  _createTopicNow(p.name,p.folderId,p.opts);
 }
 // ─────────────────────────────────────────────
 //  MOVE / ORGANIZE — topics & folders (infinite nesting)
@@ -3431,15 +3785,20 @@ function confirmMoveTopic(){
 
   } else if(_moveItem.type==='folder'){
     var f=findFolder(_moveItem.id); if(!f){showToast('Folder not found','error');closeMoveTopic();return;}
-    // Remove from current parent
+    // Validate destination FIRST — never detach the folder until we're sure
+    // re-attaching will succeed, otherwise a failed lookup would orphan it.
+    var destFolder=null;
+    if(_moveSelectedDest!=='__root__'){
+      destFolder=findFolder(_moveSelectedDest);
+      if(!destFolder){showToast('Destination not found','error');return;}
+      if(destFolder.id===f.id||_isFolderDescendant(f,destFolder.id)){showToast('Cannot move folder into itself or its own subfolder','error');return;}
+    }
+    // Safe to detach now
     _removeFolderFromParent(_moveItem.id);
     if(_moveSelectedDest==='__root__'){
       f.parentId=null; state.folders.push(f);
     } else {
-      var dest=findFolder(_moveSelectedDest); if(!dest){showToast('Destination not found','error');return;}
-      // Prevent moving into self or own descendant (double-checked)
-      if(dest.id===f.id||_isFolderDescendant(f,dest.id)){showToast('Cannot move folder into itself','error');return;}
-      f.parentId=dest.id; dest.subfolders=dest.subfolders||[]; dest.subfolders.push(f);
+      f.parentId=destFolder.id; destFolder.subfolders=destFolder.subfolders||[]; destFolder.subfolders.push(f);
     }
     saveState(); closeMoveTopic();
     if(currentView==='subfolder') renderSubfolderView(); else renderFolders();
@@ -3557,12 +3916,32 @@ function processJsonFile(file){
 function showImportLog(entries){var log=document.getElementById('import-log');log.style.display='block';log.innerHTML=entries.map(function(e){return '<div class="log-'+e.type+'">'+e.msg+'</div>';}).join('');}
 function importJson(){
   if(!pendingJsonData)return;if(mergeOption==='replace')state.folders=[];
+  var addedCount=0,skippedDupes=[];
   pendingJsonData.folders.forEach(function(raw){
     var ef=state.folders.find(function(f){return f.name.toLowerCase()===raw.name.toLowerCase();});
     if(!ef){ef={id:genId(),parentId:null,name:raw.name,icon:raw.icon||'📁',color:raw.color||'#00D2BE',label:raw.label||'',subfolders:[],topics:[]};state.folders.push(ef);}
-    (raw.topics||[]).forEach(function(rt){var tn=rt.title||rt.name;if(!ef.topics.find(function(t){return t.name.toLowerCase()===tn.toLowerCase();}))ef.topics.push(createTopicData(tn,ef.id));});
+    (raw.topics||[]).forEach(function(rt){
+      var tn=rt.title||rt.name;
+      if(!tn) return;
+      // Exact match within same folder = always skip (true dupe)
+      if(ef.topics.find(function(t){return t.name.toLowerCase()===tn.toLowerCase();})) return;
+      // Fuzzy match ANYWHERE in the app = flag but still import (user can clean up after)
+      var fuzzyMatches=findDuplicateTopics(tn,0.7);
+      if(fuzzyMatches.length){
+        skippedDupes.push({name:tn,matchedWith:fuzzyMatches[0].topic.name,folder:fuzzyMatches[0].folder.name,score:Math.round(fuzzyMatches[0].score*100)});
+      }
+      ef.topics.push(createTopicData(tn,ef.id));
+      addedCount++;
+    });
   });
-  saveState();closeJsonImport();showToast('✅ Import complete!','success');if(currentView==='folders'){currentFolderId=null;renderFolders();}
+  saveState();closeJsonImport();
+  if(skippedDupes.length){
+    showToast('✅ Imported '+addedCount+' topics — ⚠️ '+skippedDupes.length+' look like possible duplicates, check the console/list','warn');
+    console.warn('Possible duplicate topics imported:',skippedDupes);
+  } else {
+    showToast('✅ Import complete! '+addedCount+' topics added','success');
+  }
+  if(currentView==='folders'){currentFolderId=null;renderFolders();}
 }
 function exportBackup(){try{var blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='medtrack-backup-'+todayStr()+'.json';a.click();URL.revokeObjectURL(url);showToast('💾 Backup downloaded!','success');}catch(e){showToast('Backup failed: '+e.message,'error');}}
 function handleRestoreFile(e){var file=e.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(ev){try{var data=JSON.parse(ev.target.result);if(!data.folders)throw new Error('Invalid backup');state=Object.assign({},state,data);patchTree(state.folders);saveState();closeRestore();showToast('♻️ Backup restored!','success');showView('home');}catch(err){document.getElementById('restore-status').textContent='❌ Error: '+err.message;}};reader.readAsText(file);}
@@ -4453,14 +4832,38 @@ function v4RenderRevCard(){
 function v4SubmitConf(score){
   if(v4RevIdx>=v4RevQueue.length)return;
   var x=v4RevQueue[v4RevIdx],t=x.topic;
-  var reps=t.repetitions||0;
-  if(score<3){t.repetitions=0;t.interval=1;if(score===0)t.weakFlag=true;}
-  else{if(score===5)t.weakFlag=false;t.repetitions=reps+1;var base=SR_INTERVALS[Math.min(t.repetitions,SR_INTERVALS.length-1)];t.interval=Math.round(base*(score===5?1.2:1.0));}
-  var today=todayStr();t.lastReviewDate=today;t.nextReviewDate=addDays(today,t.interval);
-  state.heatmap[today]=(state.heatmap[today]||0)+1;trackWeeklyStudied(t.id);updateStreak();saveState();
-  if(score>=4)showToast('🚀 "'+t.name+'" — next in '+t.interval+'d','success');
-  else if(score===0)showToast('💪 Rescheduled "'+t.name+'" for tomorrow','info');
+  applyRevisionScore(t,score);
+  if(score>=4)showToast('🚀 "'+t.name+'" — next in '+t.interval+'d (Step '+(t.repetitions+1)+'/8)','success');
+  else if(score===0)showToast('💪 Reset to Step 1 — "'+t.name+'" review tomorrow','info');
+  else showToast('📌 "'+t.name+'" — review again in '+t.interval+'d','info');
   v4RevIdx++;v4RenderRevCard();
+}
+// CENTRAL RIGID SM-2 SCORING — used by ALL revision entry points
+// so the schedule behaves identically everywhere (diary, revision view, weekend session).
+function applyRevisionScore(t,score,targetDate,skipHeatmap){
+  targetDate=targetDate||todayStr();
+  var reps=t.repetitions||0;
+  if(score<3){
+    // Hard/Blackout: rigid reset to Step 1 — no negotiating. This matches
+    // the research finding that failed recall = re-encoding from scratch.
+    t.repetitions=0; t.interval=SR_INTERVALS[0];
+    if(score===0) t.weakFlag=true;
+  } else {
+    // Good/Easy: advance EXACTLY one step on the fixed ladder. No multipliers —
+    // rigidity prevents the "I felt confident so I'll skip ahead" trap that
+    // causes premature interval inflation and the false-mastery problem.
+    if(score===5) t.weakFlag=false;
+    t.repetitions=reps+1;
+    t.interval=SR_INTERVALS[Math.min(t.repetitions,SR_INTERVALS.length-1)];
+  }
+  t.lastReviewDate=targetDate; t.nextReviewDate=addDays(targetDate,t.interval);
+  if(!skipHeatmap){state.heatmap[targetDate]=(state.heatmap[targetDate]||0)+1;}
+  trackWeeklyStudied(t.id);
+  // Streak only advances for TODAY's actual activity — backfilling a past
+  // day must never inflate or corrupt the live streak counter.
+  if(targetDate===todayStr()) updateStreak();
+  saveState();
+  return t;
 }
 
 // ── ADD NAV BUTTONS ──
@@ -4962,20 +5365,23 @@ function dvSyncTopicFromTask(task, completing) {
     state.heatmap[dvCurrentDate] = (state.heatmap[dvCurrentDate] || 0) + 1;
     // Auto-enroll in revision cycle if not already enrolled
     if (!t.nextReviewDate) {
-      t.nextReviewDate = addDays(dvCurrentDate, 1);
+      t.nextReviewDate = addDays(dvCurrentDate, SR_INTERVALS[0]);
       t.lastReviewDate = dvCurrentDate;
-      t.interval = 1;
+      t.interval = SR_INTERVALS[0];
       t.repetitions = t.repetitions || 0;
     }
     // Track weekly
     if (typeof trackWeeklyStudied === 'function') trackWeeklyStudied(t.id);
-    // Update streak only for today
+    // Update streak only for today — backfilling a past diary day must
+    // never inflate or corrupt the live streak counter.
     if (dvCurrentDate === todayStr()) {
       if (typeof updateStreak === 'function') updateStreak();
     }
-    // If mastered stage, run full SM-2
+    // If mastered stage, run full SM-2 — skipHeatmap=true since we already
+    // credited dvCurrentDate above; advance the rep ladder using the
+    // correct target date so backfilled days don't get stamped as "today".
     if (task.stageKey === 'mastered') {
-      autoSpacedRepetition(t);
+      applyRevisionScore(t, 4, dvCurrentDate, true); // skipHeatmap — already credited dvCurrentDate above
     }
     saveState();
     // Refresh home heatmap if visible
@@ -5245,9 +5651,11 @@ function dvRenderDueTopics() {
   var el = document.getElementById('dv-due-topics');
   if (!el) return;
   var isToday = (dvCurrentDate === todayStr());
-  var due = getDueTopics().slice(0, 6);
+  var pri = isToday ? getPrioritizedDueTopics() : null;
+  var due = isToday ? pri.today.slice(0, 6) : getDueTopics().slice(0, 6);
+  var deferredCount = isToday ? pri.overflow.length : 0;
   var revisedMap = dvGetDiaryRevised(dvCurrentDate);
-  if (!due.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">✅ Nothing due today</div>'; return; }
+  if (!due.length && !deferredCount) { el.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">✅ Nothing due today</div>'; return; }
   el.innerHTML = due.map(function(x) {
     var t = x.topic;
     var isRevised = !!revisedMap[t.id];
@@ -5257,7 +5665,7 @@ function dvRenderDueTopics() {
       '<span style="flex:1;font-size:11px' + (isRevised ? ';text-decoration:line-through;color:var(--text-muted)' : '') + '">' + t.name.slice(0,22) + '</span>' +
       (isRevised ? '<span style="font-size:10px;color:var(--green)">Done</span>' : '<span style="font-size:10px;color:var(--primary)" title="Scroll to revision">↓ Revise</span>') +
     '</div>';
-  }).join('');
+  }).join('') + (deferredCount ? '<div style="font-size:10px;color:var(--text-muted);text-align:center;padding:4px">📦 +' + deferredCount + ' deferred to tomorrow</div>' : '');
 }
 
 function dvAddDueTopicTask(topicId) {
@@ -5642,12 +6050,14 @@ function dvRenderRevisionSection() {
   var sub = document.getElementById('dv-rev-section-sub');
   if (!sec || !listEl) return;
 
-  // For today's date show due topics; for past dates show what was revised
+  // For today's date show due topics (capacity-capped); for past dates show what was revised
   var today = todayStr();
   var isToday = (dvCurrentDate === today);
-  var due;
+  var due, overflowCount = 0, capInfo = null;
   if (isToday) {
-    due = getDueTopics();
+    capInfo = getPrioritizedDueTopics();
+    due = capInfo.today;
+    overflowCount = capInfo.overflow.length;
   } else {
     var revisedMap = dvGetDiaryRevised(dvCurrentDate);
     var revisedIds = Object.keys(revisedMap);
@@ -5657,20 +6067,20 @@ function dvRenderRevisionSection() {
     due = allT.filter(function(x) { return rset.has(x.topic.id); });
   }
 
-  if (!due.length) {
+  if (!due.length && !overflowCount) {
     sec.style.display = 'none';
     return;
   }
 
   sec.style.display = '';
-  if (badge) badge.textContent = due.length;
+  if (badge) badge.textContent = due.length + (overflowCount ? '/' + (due.length+overflowCount) : '');
 
   var revisedMap = dvGetDiaryRevised(dvCurrentDate);
   var revisedCount = Object.keys(revisedMap).length;
 
   if (sub) {
     if (isToday) {
-      sub.textContent = revisedCount + ' of ' + due.length + ' revised · use the checklists for structured mastery';
+      sub.textContent = revisedCount + ' of ' + due.length + ' realistic today' + (overflowCount ? ' · ' + overflowCount + ' deferred to protect focus' : '') + ' · use checklists for structured mastery';
     } else {
       sub.textContent = revisedCount + ' topic' + (revisedCount !== 1 ? 's' : '') + ' revised on this day';
     }
@@ -5713,10 +6123,10 @@ function dvRenderRevisionSection() {
               ? '<span style="font-size:10px;color:var(--green);font-weight:700">' + ['😵 Blackout','','😓 Hard','','👍 Good','🚀 Easy'][revisedMap[t.id].score || 4] + ' ✓ +' + (t.interval || 1) + 'd</span>'
               : '')
             : '<div class="dv-rev-conf">' +
-                '<button class="dv-rev-conf-btn dv-rcb-bad" onclick="event.stopPropagation();dvReviseWithScore(\'' + t.id + '\',0)" title="Blackout — reset">😵</button>' +
-                '<button class="dv-rev-conf-btn dv-rcb-ok" onclick="event.stopPropagation();dvReviseWithScore(\'' + t.id + '\',2)" title="Hard">😓</button>' +
-                '<button class="dv-rev-conf-btn dv-rcb-good" onclick="event.stopPropagation();dvReviseWithScore(\'' + t.id + '\',4)" title="Good +' + nextInterval + 'd">👍</button>' +
-                '<button class="dv-rev-conf-btn dv-rcb-easy" onclick="event.stopPropagation();dvReviseWithScore(\'' + t.id + '\',5)" title="Easy +' + Math.round(nextInterval * 1.2) + 'd">🚀</button>' +
+                '<button class="dv-rev-conf-btn dv-rcb-bad" onclick="event.stopPropagation();dvReviseWithScore(\'' + t.id + '\',0)" title="Blackout — reset to Step 1">😵</button>' +
+                '<button class="dv-rev-conf-btn dv-rcb-ok" onclick="event.stopPropagation();dvReviseWithScore(\'' + t.id + '\',2)" title="Hard — reset to Step 1">😓</button>' +
+                '<button class="dv-rev-conf-btn dv-rcb-good" onclick="event.stopPropagation();dvReviseWithScore(\'' + t.id + '\',4)" title="Good — advance to +' + nextInterval + 'd">👍</button>' +
+                '<button class="dv-rev-conf-btn dv-rcb-easy" onclick="event.stopPropagation();dvReviseWithScore(\'' + t.id + '\',5)" title="Easy — advance to +' + nextInterval + 'd (same fixed step)">🚀</button>' +
               '</div>'
           ) +
         '</div>' +
@@ -5730,7 +6140,12 @@ function dvRenderRevisionSection() {
       // Checklist panel (hidden by default)
       dvBuildMclHtml(t) +
     '</div>';
-  }).join('');
+  }).join('') + (overflowCount ? (
+    '<div style="margin-top:10px;padding:12px 14px;background:rgba(255,179,64,0.06);border:1px dashed rgba(255,179,64,0.3);border-radius:var(--r-sm)">' +
+      '<div style="font-size:12px;font-weight:700;color:var(--yellow)">📦 ' + overflowCount + ' more due, deferred to keep today realistic</div>' +
+      '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">Doing ' + capInfo.cap + '+ deep revisions in one sitting causes shallow processing (cognitive overload research). These will resurface tomorrow ranked by urgency — nothing is lost. <span style="color:var(--primary);cursor:pointer;text-decoration:underline" onclick="openCapacitySettings()">Adjust capacity →</span></div>' +
+    '</div>'
+  ) : '');
 }
 
 /**
@@ -5760,33 +6175,12 @@ function dvReviseWithScore(topicId, score) {
   var r = findTopic(topicId);
   if (!r) return;
   var t = r.topic;
-  var today = todayStr();
 
-  // SM-2 update (same logic as v4SubmitConf)
-  var reps = t.repetitions || 0;
-  if (score < 3) {
-    t.repetitions = 0;
-    t.interval = 1;
-    if (score === 0) t.weakFlag = true;
-  } else {
-    if (score === 5) t.weakFlag = false;
-    t.repetitions = reps + 1;
-    var base = SR_INTERVALS[Math.min(t.repetitions, SR_INTERVALS.length - 1)];
-    t.interval = Math.round(base * (score === 5 ? 1.2 : 1.0));
-  }
-  t.lastReviewDate = dvCurrentDate;
-  t.nextReviewDate = addDays(dvCurrentDate, t.interval);
-
-  // Heatmap: add to the REVISED date (dvCurrentDate)
-  state.heatmap[dvCurrentDate] = (state.heatmap[dvCurrentDate] || 0) + 1;
-
-  // Weekly studied tracking
-  if (typeof trackWeeklyStudied === 'function') trackWeeklyStudied(t.id);
-
-  // Streak update (only for today)
-  if (dvCurrentDate === today) {
-    if (typeof updateStreak === 'function') updateStreak();
-  }
+  // RIGID SM-2 update — uses the SAME central function as Revision view & Weekend session,
+  // targeted at the diary day actually being viewed (today or a backfilled past day).
+  // This guarantees the schedule never drifts between parts of the app, and that
+  // backfilling history never corrupts today's live streak.
+  applyRevisionScore(t, score, dvCurrentDate);
 
   // Mark as revised in diary
   state.diaryRevised = state.diaryRevised || {};
@@ -5798,8 +6192,8 @@ function dvReviseWithScore(topicId, score) {
   // Toast feedback
   var scoreLabel = ['Blackout', '', 'Hard', '', 'Good', 'Easy'][score] || 'Good';
   var msg = score === 0
-    ? '💪 Rescheduled "' + t.name + '" for tomorrow'
-    : '✅ "' + t.name + '" revised (' + scoreLabel + ') — next in ' + t.interval + 'd 🔥';
+    ? '💪 Reset to Step 1 — "' + t.name + '" review tomorrow'
+    : '✅ "' + t.name + '" revised (' + scoreLabel + ') — Step ' + (t.repetitions) + '/8 · next in ' + t.interval + 'd';
   showToast(msg, score < 3 ? 'warn' : 'success');
 
   // Re-render
@@ -5829,12 +6223,14 @@ function dvRenderRevisionSummary() {
   if (!el) return;
 
   var isToday = (dvCurrentDate === todayStr());
-  var due = isToday ? getDueTopics() : [];
+  var capInfo = isToday ? getPrioritizedDueTopics() : null;
+  var due = isToday ? capInfo.today : []; // capacity-capped — matches what's actually shown in the revision list
+  var overflowCount = isToday ? capInfo.overflow.length : 0;
   var revisedMap = dvGetDiaryRevised(dvCurrentDate);
   var revisedIds = Object.keys(revisedMap);
   var revisedCount = revisedIds.length;
 
-  if (!due.length && !revisedCount) {
+  if (!due.length && !revisedCount && !overflowCount) {
     el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:6px 0">✅ No revisions due</div>';
     return;
   }
@@ -5851,7 +6247,8 @@ function dvRenderRevisionSummary() {
       '<div style="height:100%;width:' + pct + '%;background:' + pctColor + ';border-radius:3px;transition:width .4s"></div>' +
     '</div>' +
     '<div style="font-family:var(--font-mono);font-size:11px;color:' + pctColor + ';font-weight:700">' + revisedCount + '/' + (isToday ? total : revisedCount) + '</div>' +
-  '</div>';
+  '</div>' +
+  (overflowCount ? '<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px">📦 +' + overflowCount + ' deferred to tomorrow (capacity cap)</div>' : '');
 
   // Show revised topics
   if (revisedCount) {
