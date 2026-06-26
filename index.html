@@ -13,7 +13,7 @@
 
 <style>
 /* ===================================================
-   MEDTRACK PRO v8 — DESIGN SYSTEM
+   MEDTRACK PRO v9 — DESIGN SYSTEM
 =================================================== */
 :root {
   --bg: #060C18;
@@ -1297,6 +1297,113 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
 .link-add-row{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
 .link-add-row input{flex:1;min-width:100px}
 .link-add-row .add-res-btn{flex-shrink:0;white-space:nowrap}
+
+/* ═══════════════════════════════════════════════════════
+   DEEN MODULE — Salah / Qur'an / Seerah Gibbs Cycle
+═══════════════════════════════════════════════════════ */
+.deen-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;align-items:start}
+@media(max-width:900px){.deen-grid{grid-template-columns:1fr}}
+.deen-col-main,.deen-col-side{display:flex;flex-direction:column}
+
+/* Day ribbon (reuse dv-day-chip pattern, slightly restyled) */
+.deen-day-chip{
+  flex-shrink:0;padding:6px 12px;border-radius:var(--r-sm);
+  border:1px solid var(--border2);background:var(--surface2);
+  color:var(--text-muted);font-size:11px;cursor:pointer;transition:all .15s;
+  text-align:center;min-width:54px;font-family:var(--font-body);
+}
+.deen-day-chip:hover{border-color:var(--primary);color:var(--primary)}
+.deen-day-chip.today{border-color:var(--primary);color:var(--primary);background:var(--primary-dim)}
+.deen-day-chip.selected{background:var(--primary);color:#000;border-color:var(--primary);font-weight:700}
+.deen-day-chip .dcd-dots{display:flex;gap:2px;justify-content:center;margin-top:3px}
+.deen-day-chip .dcd-dot{width:4px;height:4px;border-radius:50%;background:var(--border2)}
+.deen-day-chip .dcd-dot.jamaa{background:var(--green)}
+.deen-day-chip .dcd-dot.alone{background:var(--yellow)}
+.deen-day-chip .dcd-dot.qazaa{background:var(--red)}
+
+/* Salah grid */
+.salah-row{
+  display:grid;grid-template-columns:90px 1fr;gap:10px;align-items:center;
+  padding:9px 4px;border-bottom:1px solid var(--border2);
+}
+.salah-row:last-child{border-bottom:none}
+.salah-name{font-family:var(--font-head);font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+.salah-time{font-size:10px;color:var(--text-muted);font-family:var(--font-mono);display:block;margin-top:1px}
+.salah-options{display:flex;gap:6px;flex-wrap:wrap}
+.salah-opt-btn{
+  flex:1;min-width:84px;padding:7px 8px;border-radius:var(--r-sm);
+  border:1px solid var(--border2);background:var(--surface2);
+  color:var(--text-muted);font-size:11px;font-weight:600;cursor:pointer;
+  transition:all .15s;text-align:center;
+}
+.salah-opt-btn:hover{border-color:var(--primary);color:var(--text)}
+.salah-opt-btn.active-jamaa{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.salah-opt-btn.active-alone{background:var(--yellow-dim);border-color:var(--yellow);color:var(--yellow)}
+.salah-opt-btn.active-qazaa{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+.salah-opt-btn.active-missed{background:rgba(255,71,87,.05);border-color:rgba(255,71,87,.3);color:var(--text-dim)}
+
+/* Quran panel */
+.quran-cat{
+  background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);
+  padding:12px;margin-bottom:10px;
+}
+.quran-cat-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.quran-cat-title{font-family:var(--font-head);font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
+.quran-cat-target{font-size:10px;color:var(--text-muted)}
+.quran-progress-bar{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.quran-progress-fill{height:100%;border-radius:3px;transition:width .3s}
+.juz-picker{display:flex;flex-wrap:wrap;gap:4px;max-height:110px;overflow-y:auto;padding:2px}
+.juz-pill{
+  width:30px;height:26px;display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-family:var(--font-mono);font-weight:700;
+  border-radius:6px;border:1px solid var(--border2);background:var(--surface2);
+  color:var(--text-muted);cursor:pointer;transition:all .15s;
+}
+.juz-pill:hover{border-color:var(--primary)}
+.juz-pill.done{background:var(--primary);color:#000;border-color:var(--primary)}
+.dars-counter{display:flex;align-items:center;gap:10px}
+.dars-counter button{width:30px;height:30px;border-radius:50%;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer}
+.dars-counter button:hover{border-color:var(--primary);color:var(--primary)}
+.dars-counter .dars-num{font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--primary);min-width:30px;text-align:center}
+
+/* Khatam panel */
+.khatam-ring-wrap{display:flex;align-items:center;gap:14px}
+.khatam-stat-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border2)}
+.khatam-stat-row:last-child{border-bottom:none}
+.khatam-history-pill{
+  display:inline-flex;align-items:center;gap:4px;font-size:10px;
+  background:var(--green-dim);border:1px solid rgba(6,255,165,.3);color:var(--green);
+  border-radius:10px;padding:2px 8px;margin:2px;
+}
+
+/* Gibbs cycle */
+.gibbs-stage-pill{
+  flex:1;min-width:70px;padding:7px 6px;border-radius:var(--r-sm);
+  border:1px solid var(--border2);background:var(--surface2);
+  font-size:10px;text-align:center;cursor:pointer;color:var(--text-muted);font-weight:600;
+  transition:all .15s;
+}
+.gibbs-stage-pill.active{background:var(--primary);color:#000;border-color:var(--primary)}
+.gibbs-stage-pill.filled{border-color:rgba(6,255,165,.4);color:var(--green)}
+.gibbs-prompt-box{
+  background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);
+  padding:12px;margin-bottom:12px;
+}
+.gibbs-prompt-icon{font-size:20px}
+.gibbs-prompt-q{font-size:12px;color:var(--text-muted);line-height:1.6;margin:6px 0 10px}
+.gibbs-seerah-note{
+  font-size:11px;color:var(--purple);background:var(--purple-dim);
+  border:1px solid rgba(199,125,255,.25);border-radius:6px;padding:8px 10px;margin-top:8px;line-height:1.55;
+}
+.gibbs-entry-card{
+  background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--primary);
+  border-radius:var(--r-sm);padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:all .15s;
+}
+.gibbs-entry-card:hover{border-color:rgba(0,210,190,.3)}
+.gibbs-tag{
+  font-size:9px;padding:2px 8px;border-radius:10px;background:var(--surface2);
+  border:1px solid var(--border2);color:var(--text-muted);margin-right:4px;display:inline-block;margin-bottom:3px;
+}
 .dv-rev-checklist-panel{
   margin-top:10px;padding:14px;
   background:linear-gradient(135deg,rgba(0,210,190,0.04),rgba(58,134,255,0.03));
@@ -1722,6 +1829,7 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
     <button class="nav-tab" id="tab-revision" onclick="showView('revision')">🔁 Revision</button>
     <button class="nav-tab" id="tab-diary" onclick="showView('diary')">📔 Diary</button>
     <button class="nav-tab" id="tab-analytics" onclick="showView('analytics')">📊 Stats</button>
+    <button class="nav-tab" id="tab-deen" onclick="showView('deen')">🕌 Deen</button>
   </div>
   <div class="nav-search-wrap">
     <span class="search-icon">🔍</span>
@@ -1966,6 +2074,135 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
 
 <!-- ═══ ANALYTICS RETENTION MAP ═══ -->
 <div id="v4-analytics-ret-inject" style="display:none"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DEEN MODULE — Salah · Qur'an · Seerah Reflection
+═══════════════════════════════════════════════════════════ -->
+<div id="view-deen" class="view">
+  <div class="view-header">
+    <div><div class="view-title">🕌 Deen Tracker</div><div class="view-subtitle">Salah · Qur'an · Seerah-Inspired Reflection — <span id="deen-date-label"></span></div></div>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+      <span style="font-size:11px;color:var(--text-muted)" id="deen-location-label">📍 Islamabad · Hanafi</span>
+      <button class="btn btn-ghost btn-sm" onclick="openDeenSettings()">⚙️ Settings</button>
+    </div>
+  </div>
+
+  <!-- Day navigator -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+    <button class="icon-btn" onclick="deenGoDate(-1)">‹</button>
+    <div id="deen-week-ribbon" style="display:flex;gap:6px;overflow-x:auto;flex:1;padding-bottom:4px"></div>
+    <button class="icon-btn" onclick="deenGoDate(1)">›</button>
+    <button class="btn btn-secondary btn-sm" onclick="deenGoToday()">Today</button>
+  </div>
+
+  <!-- Top summary strip -->
+  <div class="stats-grid" id="deen-summary-grid" style="margin-bottom:20px"></div>
+
+  <div class="deen-grid">
+    <!-- LEFT COLUMN: Salah + Quran -->
+    <div class="deen-col-main">
+
+      <!-- SALAH TRACKER -->
+      <div class="dsb-card">
+        <div class="dsb-card-title">🕋 Salah Tracker <span style="font-size:11px;color:var(--text-muted);font-weight:400" id="deen-prayer-times-sub"></span></div>
+        <div id="deen-salah-grid"></div>
+      </div>
+
+      <!-- QURAN TRACKER -->
+      <div class="dsb-card" style="margin-top:16px">
+        <div class="dsb-card-title">📖 Qur'an Tracker</div>
+        <div id="deen-quran-panel"></div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: Khatam + Streaks + Quick stats -->
+    <div class="deen-col-side">
+      <div class="dsb-card">
+        <div class="dsb-card-title">🌙 Khatam Progress</div>
+        <div id="deen-khatam-panel"></div>
+      </div>
+      <div class="dsb-card" style="margin-top:16px">
+        <div class="dsb-card-title">🔥 Salah Streaks</div>
+        <div id="deen-streak-panel"></div>
+      </div>
+      <div class="dsb-card" style="margin-top:16px">
+        <div class="dsb-card-title">📈 30-Day Consistency</div>
+        <canvas id="deen-heatmap-canvas" height="140"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEERAH-INSPIRED GIBBS REFLECTION -->
+  <div class="dsb-card" style="margin-top:20px">
+    <div class="dsb-card-title">🌟 Seerah-Inspired Reflective Cycle <span style="font-size:11px;color:var(--text-muted);font-weight:400">— process difficult moments the way the Prophet ﷺ modeled patience, reflection & growth</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:12px;color:var(--text-muted)">Log any uncomfortable or negative experience and work through it step by step.</div>
+      <button class="btn btn-primary btn-sm" onclick="openGibbsEntry()">+ New Reflection</button>
+    </div>
+    <div id="deen-gibbs-list"></div>
+  </div>
+
+</div>
+
+<!-- ═══ DEEN SETTINGS MODAL ═══ -->
+<div class="modal-overlay" id="deen-settings-overlay" onclick="if(event.target===this)closeDeenSettings()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeDeenSettings()">✕</button>
+    <div class="modal-title">⚙️ Deen Tracker Settings</div>
+    <div class="modal-subtitle">Adjust location & calculation method (defaults: Islamabad, Hanafi)</div>
+    <div class="form-group"><label class="form-label">City / Location Name</label><input class="form-input" id="deen-set-city" placeholder="Islamabad"></div>
+    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label class="form-label">Latitude</label><input class="form-input" id="deen-set-lat" placeholder="33.6844" type="number" step="0.0001"></div>
+      <div><label class="form-label">Longitude</label><input class="form-input" id="deen-set-lng" placeholder="73.0479" type="number" step="0.0001"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Timezone Offset (hours from UTC)</label><input class="form-input" id="deen-set-tz" placeholder="5" type="number" step="0.5"></div>
+    <div class="form-group">
+      <label class="form-label">Asr Calculation</label>
+      <select class="form-select" id="deen-set-asr"><option value="hanafi">Hanafi (later Asr)</option><option value="standard">Shafi'i/Maliki/Hanbali (earlier Asr)</option></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Daily Qur'an Targets</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div><label class="form-label" style="font-size:10px">Reading (juz)</label><input class="form-input" id="deen-set-target-reading" type="number" step="0.25" placeholder="3"></div>
+        <div><label class="form-label" style="font-size:10px">Manzil (juz)</label><input class="form-input" id="deen-set-target-manzil" type="number" step="0.25" placeholder="0.25"></div>
+        <div><label class="form-label" style="font-size:10px">Tafseer (dars)</label><input class="form-input" id="deen-set-target-tafseer" type="number" step="1" placeholder="1"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeDeenSettings()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDeenSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GIBBS REFLECTION ENTRY MODAL ═══ -->
+<div class="modal-overlay" id="gibbs-entry-overlay" onclick="if(event.target===this)closeGibbsEntry()">
+  <div class="modal" style="max-width:640px;max-height:88vh;overflow-y:auto">
+    <button class="modal-close" onclick="closeGibbsEntry()">✕</button>
+    <div class="modal-title">🌟 Seerah-Inspired Reflective Cycle</div>
+    <div class="modal-subtitle">Walk through all 6 stages — based on Gibbs' Reflective Cycle (1988), reframed through the Seerah's model of patience (ṣabr), self-accountability (muḥāsabah), and growth.</div>
+
+    <div id="gibbs-stepper" style="display:flex;gap:4px;margin:14px 0;flex-wrap:wrap"></div>
+    <div id="gibbs-stage-content"></div>
+
+    <div class="modal-footer" style="justify-content:space-between">
+      <button class="btn btn-secondary" id="gibbs-prev-btn" onclick="gibbsPrevStage()">‹ Back</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="closeGibbsEntry()">Save & Close</button>
+        <button class="btn btn-primary" id="gibbs-next-btn" onclick="gibbsNextStage()">Next ›</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GIBBS VIEW ENTRY MODAL (read existing reflection) ═══ -->
+<div class="modal-overlay" id="gibbs-view-overlay" onclick="if(event.target===this)closeGibbsView()">
+  <div class="modal" style="max-width:640px;max-height:88vh;overflow-y:auto">
+    <button class="modal-close" onclick="closeGibbsView()">✕</button>
+    <div id="gibbs-view-content"></div>
+  </div>
+</div>
 
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -2667,7 +2904,15 @@ var state={
   dailySchedule:{date:null,dayTitle:'',items:[],completedIds:[],microChecks:{}},
   diaryRevised:{},
   mclChecks:{},
-  settings:{dailyCapacity:6}
+  settings:{dailyCapacity:6},
+  deen:{
+    location:{city:'Islamabad',lat:33.6844,lng:73.0479,tz:5,asrMethod:'hanafi'},
+    targets:{reading:3,manzil:0.25,tafseer:1},
+    salahLog:{},      // {dateStr: {fajr:'jamaa'|'alone'|'qazaa'|null, dhuhr:..., asr:..., maghrib:..., isha:...}}
+    quranLog:{},      // {dateStr: {readingJuz:[1,2,3], manzilJuz:[0.25 portions as juzIndex.quarter strings], tafseerCount:n}}
+    khatam:{count:0, startedAt:null, cycleStartedAt:null, completedJuz:[]}, // completedJuz tracks juz 1-30 progress toward current khatam
+    gibbsEntries:[]   // [{id,date,tags:[],description,feelings,evaluation,analysis,conclusion,actionPlan,completedStages:[]}]
+  }
 };
 
 function patchTree(folders,parentId){
@@ -2729,6 +2974,14 @@ function loadState(){
     state.diaryRevised=state.diaryRevised||{};
     state.mclChecks=state.mclChecks||{};
     state.settings=state.settings||{dailyCapacity:6};
+    state.deen=state.deen||{};
+    state.deen.location=state.deen.location||{city:'Islamabad',lat:33.6844,lng:73.0479,tz:5,asrMethod:'hanafi'};
+    state.deen.targets=state.deen.targets||{reading:3,manzil:0.25,tafseer:1};
+    state.deen.salahLog=state.deen.salahLog||{};
+    state.deen.quranLog=state.deen.quranLog||{};
+    state.deen.khatam=state.deen.khatam||{count:0,startedAt:null,cycleStartedAt:null,completedJuz:[]};
+    if(state.deen.khatam.cycleStartedAt===undefined) state.deen.khatam.cycleStartedAt=null;
+    state.deen.gibbsEntries=state.deen.gibbsEntries||[];
     patchTree(state.folders);
   }catch(e){console.error('Load failed',e);}
 }
@@ -2892,7 +3145,7 @@ function getWeeklyStudiedTopics(){
 //  NAVIGATION
 // ─────────────────────────────────────────────
 var currentView='home', currentFolderId=null, topicFilter='all';
-var NAV_TABS={home:'tab-home',folders:'tab-folders',revision:'tab-revision',diary:'tab-diary',analytics:'tab-analytics'};
+var NAV_TABS={home:'tab-home',folders:'tab-folders',revision:'tab-revision',diary:'tab-diary',analytics:'tab-analytics',deen:'tab-deen'};
 
 function showView(view){
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
@@ -2906,6 +3159,7 @@ function showView(view){
     else if(view==='revision') renderRevisionView();
     else if(view==='diary') dvRenderView();
     else if(view==='analytics') renderAnalytics();
+    else if(view==='deen') renderDeenView();
   }catch(e){console.error('View render error',e);}
 }
 function navigateToFolder(id){
@@ -3832,17 +4086,6 @@ function buildFolderOptions(folders,depth){
 // ─────────────────────────────────────────────
 //  REVISION
 // ─────────────────────────────────────────────
-function renderRevisionView(){
-  var due=getDueTopics(),content=document.getElementById('revision-content'); if(!content) return;
-  if(!due.length){content.innerHTML='<div class="rev-empty"><div class="rev-empty-icon">🎉</div><div style="font-family:var(--font-head);font-size:20px;font-weight:800;margin-bottom:8px">All caught up!</div><div style="color:var(--text-muted);font-size:14px;margin-bottom:20px">No topics due for review today.</div><button class="btn btn-primary" onclick="showView(\'folders\')">📚 Study New Topics</button></div>';return;}
-  var queueHtml=due.slice(0,10).map(function(item,i){return '<div class="rev-queue-item '+(i===0?'current':'')+'" onclick="goToTopic(\''+item.topic.id+'\')"><div class="q-dot" style="background:'+(i===0?'var(--primary)':'var(--surface3)')+'"></div><span style="flex:1">'+item.topic.name+'</span><span style="color:var(--text-muted);font-size:11px">'+item.folder.name+'</span></div>';}).join('');
-  content.innerHTML='<div style="display:grid;grid-template-columns:1fr 280px;gap:16px"><div>'+buildRevCard(due[0])+'</div><div><div class="section-title">📋 Queue ('+due.length+' topics)</div><div class="rev-queue-list">'+queueHtml+'</div>'+(due.length>10?'<div style="font-size:12px;color:var(--text-muted);margin-top:8px;text-align:center">+'+(due.length-10)+' more</div>':'')+'</div></div>';
-}
-function buildRevCard(item){
-  var topic=item.topic,folder=item.folder;
-  return '<div class="revision-session-card"><div class="rev-topic-name" onclick="goToTopic(\''+topic.id+'\')">'+topic.name+' 🔗</div><div class="rev-topic-folder">'+(folder.icon||'📂')+' '+folder.name+'</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Interval: '+(topic.interval||0)+'d · Reps: '+(topic.repetitions||0)+' · '+(topic.lastReviewDate?'Last: '+topic.lastReviewDate:'First review')+'</div>'+(topic.notes?'<div style="background:var(--surface2);border-radius:var(--r-sm);padding:12px;font-size:12px;color:var(--text-muted);text-align:left;margin-bottom:16px;max-height:100px;overflow-y:auto">'+topic.notes+'</div>':'')+'<div class="rev-quality-btns"><button class="rev-q-btn good" style="width:100%;max-width:340px" onclick="openMasteryCheck(\''+topic.id+'\')">🏆 Open Mastery Checklist<div class="rev-q-sub">4-point science check · Next: '+calcNextInterval(topic)+'d</div></button></div></div>';
-}
-function startRevisionSession(){showView('revision');}
 function showWeakAreas(){showView('analytics');}
 
 // ─────────────────────────────────────────────
@@ -3896,6 +4139,538 @@ function renderSubjectChart(){destroyChart('subjects');var ctx=document.getEleme
 function renderPieChart(){destroyChart('pie');var ctx=document.getElementById('chart-pie');if(!ctx)return;var all=getAllTopics(),mastered=all.filter(function(x){return x.topic.stages.mastered;}).length,inProg=all.filter(function(x){return !x.topic.stages.mastered&&getTopicCompletion(x.topic)>0;}).length,ns=all.length-mastered-inProg;chartInstances.pie=new Chart(ctx,{type:'doughnut',data:{labels:['Mastered','In Progress','Not Started'],datasets:[{data:[mastered,inProg,ns],backgroundColor:['rgba(6,255,165,0.7)','rgba(0,210,190,0.7)','rgba(21,36,56,0.9)'],borderColor:['#06FFA5','#00D2BE','#2A4A6A'],borderWidth:1}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#4D7A9A',font:{size:10}}}}}});}
 function renderWeeklyChart(){destroyChart('weekly');var ctx=document.getElementById('chart-weekly');if(!ctx)return;var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],today=new Date().getDay();var labels=[];for(var i=0;i<7;i++)labels.push(days[(today-6+i+7)%7]);var data=(state.studyTimer.weeklyData||[0,0,0,0,0,0,0]).map(function(s){return +(s/3600).toFixed(1);});chartInstances.weekly=new Chart(ctx,{type:'line',data:{labels:labels,datasets:[{label:'Hours',data:data,fill:true,backgroundColor:'rgba(0,210,190,0.08)',borderColor:'#00D2BE',borderWidth:2,pointBackgroundColor:'#00D2BE',tension:0.4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{color:'#4D7A9A',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},x:{ticks:{color:'#4D7A9A',font:{size:10}},grid:{display:false}}}}});}
 function renderRevisionChart(){destroyChart('revisions');var ctx=document.getElementById('chart-revisions');if(!ctx)return;var today=todayStr(),labels=state.folders.map(function(f){return f.name.length>10?f.name.slice(0,10)+'…':f.name;}),data=state.folders.map(function(f){var all=getFolderTopicsRec(f);return all.filter(function(t){return t.nextReviewDate&&t.nextReviewDate<=today;}).length;});chartInstances.revisions=new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{label:'Due',data:data,backgroundColor:'rgba(255,71,87,0.5)',borderColor:'#FF4757',borderWidth:1,borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{color:'#4D7A9A',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},x:{ticks:{color:'#4D7A9A',font:{size:10}},grid:{display:false}}}}});}
+
+// ═══════════════════════════════════════════════════════════════
+//  DEEN MODULE — Salah · Qur'an · Seerah-Inspired Gibbs Reflection
+// ═══════════════════════════════════════════════════════════════
+var deenCurrentDate = todayStr();
+var SALAH_NAMES = ['fajr','dhuhr','asr','maghrib','isha'];
+var SALAH_LABELS = {fajr:'🌅 Fajr', dhuhr:'☀️ Dhuhr', asr:'🌤️ Asr', maghrib:'🌇 Maghrib', isha:'🌙 Isha'};
+var SALAH_STATUS_LABELS = {jamaa:'🕌 Jamaa\'a', alone:'🧎 Alone', qazaa:'⏰ Qazaa', missed:'✕ Missed'};
+
+// ── PRAYER TIME CALCULATION ──────────────────────────────────────
+// Standard astronomical method (same approach used by most prayer-time
+// apps): solar declination + hour angle equations. Hanafi Asr uses
+// shadow-length factor 2 (vs 1 for Shafi'i/standard), which is why
+// Hanafi Asr falls noticeably later in the afternoon.
+function _julianDate(y,m,d){
+  if(m<=2){y-=1;m+=12;}
+  var A=Math.floor(y/100),B=2-A+Math.floor(A/4);
+  return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5;
+}
+function _sunPosition(jd){
+  var D=jd-2451545.0;
+  var g=(357.529+0.98560028*D)%360;
+  var q=(280.459+0.98564736*D)%360;
+  var L=(q+1.915*Math.sin(g*Math.PI/180)+0.020*Math.sin(2*g*Math.PI/180))%360;
+  var e=23.439-0.00000036*D;
+  var RAD=Math.PI/180;
+  var dec=Math.asin(Math.sin(e*RAD)*Math.sin(L*RAD))/RAD;
+  var RA=Math.atan2(Math.cos(e*RAD)*Math.sin(L*RAD),Math.cos(L*RAD))/RAD/15;
+  RA=RA<0?RA+24:RA;
+  var eqt=q/15-RA; if(eqt>1)eqt-=24; if(eqt<-1)eqt+=24;
+  return {dec:dec,eqt:eqt};
+}
+function _timeForAngle(angle,jd,lat,lng,tz,sunPos,ccw){
+  var RAD=Math.PI/180;
+  var cosH=(-Math.sin(angle*RAD)-Math.sin(lat*RAD)*Math.sin(sunPos.dec*RAD))/(Math.cos(lat*RAD)*Math.cos(sunPos.dec*RAD));
+  if(cosH>1||cosH<-1) return null; // sun never reaches this angle (polar edge case)
+  var H=Math.acos(cosH)/RAD/15;
+  var noon=12+tz-lng/15-sunPos.eqt;
+  return ccw?noon-H:noon+H;
+}
+function _decimalToHHMM(t){
+  if(t===null||isNaN(t)) return '—';
+  t=((t%24)+24)%24;
+  var h=Math.floor(t),m=Math.round((t-h)*60);
+  if(m===60){m=0;h++;}
+  h=h%24;
+  var ampm=h>=12?'PM':'AM',h12=h%12; if(h12===0)h12=12;
+  return h12+':'+String(m).padStart(2,'0')+' '+ampm;
+}
+// Returns {fajr,sunrise,dhuhr,asr,maghrib,isha} as decimal hours (local solar approx)
+function calcPrayerTimes(dateStr,loc){
+  loc=loc||state.deen.location;
+  var d=new Date(dateStr+'T12:00:00');
+  var jd=_julianDate(d.getFullYear(),d.getMonth()+1,d.getDate());
+  var sunPos=_sunPosition(jd-loc.tz/24); // approx correction for timezone-local noon
+  var lat=loc.lat,lng=loc.lng,tz=loc.tz;
+  var dhuhr=12+tz-lng/15-sunPos.eqt;
+  var fajr=_timeForAngle(18,jd,lat,lng,tz,sunPos,true);      // 18° below horizon (standard Fajr angle)
+  var sunrise=_timeForAngle(0.833,jd,lat,lng,tz,sunPos,true);
+  var maghrib=_timeForAngle(0.833,jd,lat,lng,tz,sunPos,false);
+  var isha=_timeForAngle(17,jd,lat,lng,tz,sunPos,false);     // 17° below horizon (standard Isha angle)
+  // Asr: shadow factor t=1 (standard) or t=2 (Hanafi)
+  var RAD=Math.PI/180;
+  var asrFactor=(loc.asrMethod==='hanafi')?2:1;
+  var asrAngle=-Math.atan(1/(asrFactor+Math.tan(Math.abs(lat-sunPos.dec)*RAD)))/RAD;
+  var asr=_timeForAngle(asrAngle,jd,lat,lng,tz,sunPos,false);
+  return {fajr:fajr,sunrise:sunrise,dhuhr:dhuhr,asr:asr,maghrib:maghrib,isha:isha};
+}
+function getPrayerTimesFormatted(dateStr){
+  var t=calcPrayerTimes(dateStr);
+  var out={}; SALAH_NAMES.forEach(function(k){out[k]=_decimalToHHMM(t[k]);});
+  return out;
+}
+
+// ── DATE NAV ──────────────────────────────────────────────────────
+function deenGoDate(delta){deenCurrentDate=addDays(deenCurrentDate,delta);renderDeenView();}
+function deenGoToday(){deenCurrentDate=todayStr();renderDeenView();}
+
+function deenGetSalahDay(dateStr){
+  state.deen.salahLog[dateStr]=state.deen.salahLog[dateStr]||{};
+  return state.deen.salahLog[dateStr];
+}
+function deenGetQuranDay(dateStr){
+  var day=state.deen.quranLog[dateStr]=state.deen.quranLog[dateStr]||{};
+  // Defensive defaults — guards against partially-shaped objects from
+  // older saves or future schema changes, not just entirely-missing days.
+  day.readingJuz=day.readingJuz||[];
+  day.manzilPortions=day.manzilPortions||[];
+  if(day.tafseerCount===undefined||day.tafseerCount===null) day.tafseerCount=0;
+  return day;
+}
+
+// ── SALAH TRACKING ────────────────────────────────────────────────
+function deenSetSalah(dateStr,prayer,status){
+  var day=deenGetSalahDay(dateStr);
+  day[prayer]=(day[prayer]===status)?null:status; // click again to clear
+  saveState();
+  renderDeenSalahGrid();
+  renderDeenSummary();
+  renderDeenWeekRibbon();
+  renderDeenStreaks();
+  renderDeenHeatmap();
+  showToast(day[prayer]?SALAH_LABELS[prayer]+' marked '+SALAH_STATUS_LABELS[day[prayer]]:SALAH_LABELS[prayer]+' cleared','success');
+}
+function deenSalahCompletionPct(dateStr){
+  var day=deenGetSalahDay(dateStr);
+  var done=SALAH_NAMES.filter(function(p){return day[p];}).length;
+  return Math.round((done/5)*100);
+}
+function renderDeenSalahGrid(){
+  var el=document.getElementById('deen-salah-grid'); if(!el) return;
+  var day=deenGetSalahDay(deenCurrentDate);
+  var times=getPrayerTimesFormatted(deenCurrentDate);
+  el.innerHTML=SALAH_NAMES.map(function(p){
+    var cur=day[p];
+    return '<div class="salah-row">'+
+      '<div class="salah-name">'+SALAH_LABELS[p]+'<span class="salah-time">'+times[p]+'</span></div>'+
+      '<div class="salah-options">'+
+        '<button class="salah-opt-btn '+(cur==='jamaa'?'active-jamaa':'')+'" onclick="deenSetSalah(\''+deenCurrentDate+'\',\''+p+'\',\'jamaa\')">🕌 Jamaa\'a</button>'+
+        '<button class="salah-opt-btn '+(cur==='alone'?'active-alone':'')+'" onclick="deenSetSalah(\''+deenCurrentDate+'\',\''+p+'\',\'alone\')">🧎 Alone</button>'+
+        '<button class="salah-opt-btn '+(cur==='qazaa'?'active-qazaa':'')+'" onclick="deenSetSalah(\''+deenCurrentDate+'\',\''+p+'\',\'qazaa\')">⏰ Qazaa</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  var sub=document.getElementById('deen-prayer-times-sub');
+  if(sub) sub.textContent='— '+deenCurrentDate+' · '+deenSalahCompletionPct(deenCurrentDate)+'% logged · times are estimates, verify locally';
+}
+
+// ── QUR'AN TRACKING ───────────────────────────────────────────────
+function deenToggleJuz(dateStr,category,juzNum){
+  var day=deenGetQuranDay(dateStr);
+  if(category==='reading'){
+    var idx=day.readingJuz.indexOf(juzNum);
+    if(idx>=0) day.readingJuz.splice(idx,1); else day.readingJuz.push(juzNum);
+    // Auto-update khatam progress only for the reading category — manzil
+    // (revision recitation) intentionally does NOT count toward khatam.
+    deenSyncKhatamProgress();
+  } else if(category==='manzil'){
+    var idx2=day.manzilPortions.indexOf(juzNum);
+    if(idx2>=0) day.manzilPortions.splice(idx2,1); else day.manzilPortions.push(juzNum);
+  }
+  saveState();
+  renderDeenQuranPanel();
+  renderDeenKhatamPanel();
+  renderDeenSummary();
+  renderDeenWeekRibbon();
+  renderDeenHeatmap();
+}
+function deenAdjustTafseer(dateStr,delta){
+  var day=deenGetQuranDay(dateStr);
+  day.tafseerCount=Math.max(0,(day.tafseerCount||0)+delta);
+  saveState();
+  renderDeenQuranPanel();
+  renderDeenSummary();
+}
+// Syncs the rolling Khatam counter. Each khatam "cycle" has a start
+// timestamp (cycleStartedAt); only readingJuz logged ON OR AFTER that
+// timestamp count toward the CURRENT cycle. This means completing a
+// khatam never erases or mutates earlier days' historical reading
+// records — past diary entries stay accurate forever, exactly as logged.
+function deenSyncKhatamProgress(){
+  var k=state.deen.khatam;
+  if(!k.cycleStartedAt) k.cycleStartedAt='0000-01-01'; // epoch start = count everything pre-existing
+  var completed=new Set();
+  Object.keys(state.deen.quranLog).forEach(function(d){
+    if(d<k.cycleStartedAt) return; // belongs to a prior, already-completed cycle
+    (state.deen.quranLog[d].readingJuz||[]).forEach(function(j){if(j>=1&&j<=30) completed.add(j);});
+  });
+  k.completedJuz=Array.from(completed);
+  if(!k.startedAt && k.completedJuz.length>0) k.startedAt=todayStr();
+  if(k.completedJuz.length>=30){
+    k.count=(k.count||0)+1;
+    // Start a NEW cycle from tomorrow's boundary — today's juz markers stay
+    // intact and credited to the cycle that just completed; nothing is erased.
+    k.cycleStartedAt=addDays(todayStr(),1);
+    k.completedJuz=[];
+    k.startedAt=null;
+    showToast('🌙 Khatam #'+k.count+' completed! May Allah accept it. New cycle started — your reading history is preserved.','success');
+  }
+}
+function renderDeenQuranPanel(){
+  var el=document.getElementById('deen-quran-panel'); if(!el) return;
+  var day=deenGetQuranDay(deenCurrentDate);
+  var t=state.deen.targets;
+
+  // Reading category (target: juz count, e.g. 3/day)
+  var readingPct=Math.min(100,Math.round((day.readingJuz.length/(t.reading||3))*100));
+  var readingJuzPicker=Array.from({length:30},function(_,i){return i+1;}).map(function(j){
+    var done=day.readingJuz.indexOf(j)>=0;
+    return '<div class="juz-pill '+(done?'done':'')+'" onclick="deenToggleJuz(\''+deenCurrentDate+'\',\'reading\',' +j+')" title="Juz '+j+'">'+j+'</div>';
+  }).join('');
+
+  // Manzil category (target: 1/4 juz, displayed as quarter-juz portions across all 30 = 120 quarters)
+  var manzilPct=Math.min(100,Math.round((day.manzilPortions.length/((t.manzil||0.25)*4))*100));
+  var manzilPicker=Array.from({length:30},function(_,i){return i+1;}).map(function(j){
+    var done=day.manzilPortions.indexOf(j)>=0;
+    return '<div class="juz-pill '+(done?'done':'')+'" style="'+(done?'':'opacity:.6')+'" onclick="deenToggleJuz(\''+deenCurrentDate+'\',\'manzil\','+j+')" title="Manzil portion '+j+'">'+j+'</div>';
+  }).join('');
+
+  el.innerHTML=
+    '<div class="quran-cat">'+
+      '<div class="quran-cat-hdr"><div class="quran-cat-title">📘 Reading <span style="font-weight:400;color:var(--text-muted)">(select juz completed today)</span></div><div class="quran-cat-target">'+day.readingJuz.length+'/'+(t.reading||3)+' juz target</div></div>'+
+      '<div class="quran-progress-bar"><div class="quran-progress-fill" style="width:'+readingPct+'%;background:'+(readingPct>=100?'var(--green)':'var(--primary)')+'"></div></div>'+
+      '<div class="juz-picker">'+readingJuzPicker+'</div>'+
+    '</div>'+
+    '<div class="quran-cat">'+
+      '<div class="quran-cat-hdr"><div class="quran-cat-title">📗 Manzil <span style="font-weight:400;color:var(--text-muted)">(revision recitation — min. ¼ juz)</span></div><div class="quran-cat-target">'+day.manzilPortions.length+' portion(s) today</div></div>'+
+      '<div class="quran-progress-bar"><div class="quran-progress-fill" style="width:'+manzilPct+'%;background:'+(manzilPct>=100?'var(--green)':'var(--blue)')+'"></div></div>'+
+      '<div class="juz-picker">'+manzilPicker+'</div>'+
+    '</div>'+
+    '<div class="quran-cat" style="margin-bottom:0">'+
+      '<div class="quran-cat-hdr"><div class="quran-cat-title">📙 Tafseer Mutala\'a <span style="font-weight:400;color:var(--text-muted)">(min. '+(t.tafseer||1)+' dars/day)</span></div></div>'+
+      '<div class="dars-counter">'+
+        '<button onclick="deenAdjustTafseer(\''+deenCurrentDate+'\',-1)">−</button>'+
+        '<span class="dars-num">'+(day.tafseerCount||0)+'</span>'+
+        '<button onclick="deenAdjustTafseer(\''+deenCurrentDate+'\',1)">+</button>'+
+        '<span style="font-size:11px;color:'+((day.tafseerCount||0)>=(t.tafseer||1)?'var(--green)':'var(--text-muted)')+'">'+((day.tafseerCount||0)>=(t.tafseer||1)?'✅ Target met':'dars completed')+'</span>'+
+      '</div>'+
+    '</div>';
+}
+
+// ── KHATAM PANEL ──────────────────────────────────────────────────
+function renderDeenKhatamPanel(){
+  var el=document.getElementById('deen-khatam-panel'); if(!el) return;
+  var k=state.deen.khatam;
+  var pct=Math.round((k.completedJuz.length/30)*100);
+  var daysActive=k.startedAt?Math.max(1,Math.round((new Date(todayStr())-new Date(k.startedAt))/86400000)+1):0;
+  var paceJuzPerDay=daysActive?(k.completedJuz.length/daysActive).toFixed(2):'—';
+  var projectedDays=paceJuzPerDay&&paceJuzPerDay!=='—'&&+paceJuzPerDay>0?Math.ceil((30-k.completedJuz.length)/+paceJuzPerDay):null;
+
+  el.innerHTML=
+    '<div class="khatam-ring-wrap">'+
+      '<div style="position:relative;width:74px;height:74px;flex-shrink:0">'+
+        '<svg width="74" height="74" viewBox="0 0 74 74"><circle cx="37" cy="37" r="30" fill="none" stroke="var(--surface3)" stroke-width="7"/>'+
+        '<circle cx="37" cy="37" r="30" fill="none" stroke="var(--primary)" stroke-width="7" stroke-dasharray="'+(2*Math.PI*30)+'" stroke-dashoffset="'+(2*Math.PI*30*(1-pct/100))+'" stroke-linecap="round" transform="rotate(-90 37 37)"/></svg>'+
+        '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-family:var(--font-mono);font-weight:800;font-size:15px;color:var(--primary)">'+pct+'%</div></div>'+
+      '</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-family:var(--font-head);font-size:13px;font-weight:800">Khatam #'+(k.count+1)+'</div>'+
+        '<div style="font-size:11px;color:var(--text-muted)">'+k.completedJuz.length+'/30 juz read this cycle</div>'+
+        '<div style="font-size:10px;color:var(--text-dim);margin-top:2px">Started: '+(k.startedAt||'—')+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="khatam-stat-row"><span>📅 Days active</span><span style="font-family:var(--font-mono)">'+daysActive+'</span></div>'+
+    '<div class="khatam-stat-row"><span>⚡ Pace</span><span style="font-family:var(--font-mono)">'+paceJuzPerDay+' juz/day</span></div>'+
+    '<div class="khatam-stat-row"><span>🎯 Est. completion</span><span style="font-family:var(--font-mono)">'+(projectedDays?'~'+projectedDays+' days':'—')+'</span></div>'+
+    '<div class="khatam-stat-row"><span>🏆 Khatams completed (lifetime)</span><span style="font-family:var(--font-mono);color:var(--green);font-weight:700">'+k.count+'</span></div>'+
+    (k.count>0?'<div style="margin-top:8px">'+Array.from({length:k.count},function(_,i){return '<span class="khatam-history-pill">🌙 Khatam '+(i+1)+'</span>';}).join('')+'</div>':'');
+}
+
+// ── STREAKS ───────────────────────────────────────────────────────
+// "Perfect day" = all 5 prayers logged as jamaa'a or alone (not qazaa/missed)
+function deenIsPerfectDay(dateStr){
+  var day=deenGetSalahDay(dateStr);
+  return SALAH_NAMES.every(function(p){return day[p]==='jamaa'||day[p]==='alone';});
+}
+function deenIsJamaaDay(dateStr){
+  var day=deenGetSalahDay(dateStr);
+  return SALAH_NAMES.every(function(p){return day[p]==='jamaa';});
+}
+function deenCalcStreak(checkFn){
+  var streak=0,d=todayStr();
+  // If today isn't complete yet, start counting from yesterday so an
+  // in-progress today doesn't break an otherwise-intact streak.
+  if(!checkFn(d)) d=addDays(d,-1);
+  while(checkFn(d)){streak++;d=addDays(d,-1);}
+  return streak;
+}
+function renderDeenStreaks(){
+  var el=document.getElementById('deen-streak-panel'); if(!el) return;
+  var perfectStreak=deenCalcStreak(deenIsPerfectDay);
+  var jamaaStreak=deenCalcStreak(deenIsJamaaDay);
+  // Per-prayer jamaa'a streaks (e.g. Fajr jamaa'a streak is often tracked separately — high spiritual value)
+  var fajrJamaaStreak=deenCalcStreak(function(d){return deenGetSalahDay(d).fajr==='jamaa';});
+
+  el.innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'+
+      '<div style="text-align:center;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);padding:10px"><div style="font-family:var(--font-mono);font-size:22px;font-weight:800;color:var(--primary)">'+perfectStreak+'</div><div style="font-size:10px;color:var(--text-muted)">🔥 All 5 logged</div></div>'+
+      '<div style="text-align:center;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);padding:10px"><div style="font-family:var(--font-mono);font-size:22px;font-weight:800;color:var(--green)">'+jamaaStreak+'</div><div style="font-size:10px;color:var(--text-muted)">🕌 Full Jamaa\'a</div></div>'+
+    '</div>'+
+    '<div class="khatam-stat-row"><span>🌅 Fajr Jamaa\'a streak</span><span style="font-family:var(--font-mono);color:var(--primary);font-weight:700">'+fajrJamaaStreak+' days</span></div>'+
+    '<div class="khatam-stat-row"><span>📖 Qur\'an reading streak</span><span style="font-family:var(--font-mono);color:var(--primary);font-weight:700">'+deenCalcStreak(function(d){var q=deenGetQuranDay(d);return q.readingJuz.length>0;})+' days</span></div>';
+}
+
+// ── 30-DAY CONSISTENCY HEATMAP ───────────────────────────────────
+function renderDeenHeatmap(){
+  var ctx=document.getElementById('deen-heatmap-canvas'); if(!ctx) return;
+  destroyChart('deenHeatmap');
+  var today=todayStr(),labels=[],data=[];
+  for(var i=29;i>=0;i--){
+    var d=addDays(today,-i);
+    labels.push(d.slice(5));
+    var sd=deenGetSalahDay(d);
+    var doneCount=SALAH_NAMES.filter(function(p){return sd[p]==='jamaa'||sd[p]==='alone';}).length;
+    data.push(doneCount);
+  }
+  chartInstances.deenHeatmap=new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{label:'Prayers logged',data:data,backgroundColor:data.map(function(v){return v>=5?'rgba(6,255,165,0.7)':v>=3?'rgba(0,210,190,0.6)':v>=1?'rgba(255,179,64,0.5)':'rgba(255,71,87,0.25)';}),borderRadius:3}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:5,ticks:{stepSize:1,color:'#4D7A9A',font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'}},x:{ticks:{color:'#4D7A9A',font:{size:8},maxRotation:90},grid:{display:false}}}}});
+}
+
+// ── WEEK RIBBON ───────────────────────────────────────────────────
+function renderDeenWeekRibbon(){
+  var el=document.getElementById('deen-week-ribbon'); if(!el) return;
+  var today=todayStr(),days=[];
+  for(var i=-6;i<=0;i++) days.push(addDays(today,i));
+  el.innerHTML=days.map(function(d){
+    var dt=new Date(d+'T00:00:00'),dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getDay()],dm=dt.getDate();
+    var sd=deenGetSalahDay(d);
+    var dots=SALAH_NAMES.map(function(p){var c=sd[p]==='jamaa'?'jamaa':sd[p]==='alone'?'alone':sd[p]==='qazaa'?'qazaa':'';return '<div class="dcd-dot '+c+'"></div>';}).join('');
+    var cls='deen-day-chip'+(d===today?' today':'')+(d===deenCurrentDate?' selected':'');
+    return '<div class="'+cls+'" onclick="deenCurrentDate=\''+d+'\';renderDeenView()"><div style="font-size:10px;opacity:.7">'+dn+'</div><div style="font-size:13px;font-weight:700">'+dm+'</div><div class="dcd-dots">'+dots+'</div></div>';
+  }).join('');
+  var label=document.getElementById('deen-date-label'); if(label) label.textContent=deenCurrentDate===today?'Today':deenCurrentDate;
+}
+
+// ── TOP SUMMARY ───────────────────────────────────────────────────
+function renderDeenSummary(){
+  var el=document.getElementById('deen-summary-grid'); if(!el) return;
+  var day=deenGetQuranDay(deenCurrentDate);
+  var t=state.deen.targets;
+  var salahPct=deenSalahCompletionPct(deenCurrentDate);
+  var readingDone=day.readingJuz.length>=(t.reading||3);
+  var manzilDone=day.manzilPortions.length>=((t.manzil||0.25)*4);
+  var tafseerDone=(day.tafseerCount||0)>=(t.tafseer||1);
+  function card(label,value,sub,icon,colorClass){
+    return '<div class="stat-card '+colorClass+'"><div class="stat-label">'+label+'</div><div class="stat-value">'+value+'</div><div class="stat-sub">'+sub+'</div><div class="stat-icon">'+icon+'</div></div>';
+  }
+  el.innerHTML=
+    card('Salah Logged',salahPct+'%','prayers today','🕋',salahPct===100?'c-green':salahPct>=60?'c-teal':'c-yellow')+
+    card('Reading',readingDone?'✅':day.readingJuz.length+'/'+(t.reading||3),'juz today','📖',readingDone?'c-green':'c-blue')+
+    card('Manzil',manzilDone?'✅':Math.round(day.manzilPortions.length/4*100)+'%','of ¼ juz target','📗',manzilDone?'c-green':'c-purple')+
+    card('Tafseer',tafseerDone?'✅':(day.tafseerCount||0)+'/'+(t.tafseer||1),'dars today','📙',tafseerDone?'c-green':'c-yellow');
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────
+function openDeenSettings(){
+  var loc=state.deen.location,t=state.deen.targets;
+  document.getElementById('deen-set-city').value=loc.city;
+  document.getElementById('deen-set-lat').value=loc.lat;
+  document.getElementById('deen-set-lng').value=loc.lng;
+  document.getElementById('deen-set-tz').value=loc.tz;
+  document.getElementById('deen-set-asr').value=loc.asrMethod;
+  document.getElementById('deen-set-target-reading').value=t.reading;
+  document.getElementById('deen-set-target-manzil').value=t.manzil;
+  document.getElementById('deen-set-target-tafseer').value=t.tafseer;
+  document.getElementById('deen-settings-overlay').classList.add('show');
+}
+function closeDeenSettings(){document.getElementById('deen-settings-overlay').classList.remove('show');}
+function saveDeenSettings(){
+  state.deen.location={
+    city:document.getElementById('deen-set-city').value.trim()||'Islamabad',
+    lat:+document.getElementById('deen-set-lat').value||33.6844,
+    lng:+document.getElementById('deen-set-lng').value||73.0479,
+    tz:+document.getElementById('deen-set-tz').value||5,
+    asrMethod:document.getElementById('deen-set-asr').value
+  };
+  state.deen.targets={
+    reading:+document.getElementById('deen-set-target-reading').value||3,
+    manzil:+document.getElementById('deen-set-target-manzil').value||0.25,
+    tafseer:+document.getElementById('deen-set-target-tafseer').value||1
+  };
+  saveState(); closeDeenSettings(); renderDeenView();
+  showToast('⚙️ Deen settings saved','success');
+}
+
+// ── MASTER RENDER ─────────────────────────────────────────────────
+function renderDeenView(){
+  var loc=document.getElementById('deen-location-label');
+  if(loc) loc.textContent='📍 '+state.deen.location.city+' · '+(state.deen.location.asrMethod==='hanafi'?'Hanafi':'Standard');
+  renderDeenWeekRibbon();
+  renderDeenSummary();
+  renderDeenSalahGrid();
+  renderDeenQuranPanel();
+  renderDeenKhatamPanel();
+  renderDeenStreaks();
+  setTimeout(function(){renderDeenHeatmap();},50);
+  renderGibbsList();
+}
+
+// ─────────────────────────────────────────────
+//  SEERAH-INSPIRED GIBBS REFLECTIVE CYCLE
+// ─────────────────────────────────────────────
+// Gibbs' Reflective Cycle (1988) is a well-established 6-stage model used
+// widely in clinical/medical education for processing difficult experiences.
+// Each stage is paired with a Seerah-based lens — reflecting how the
+// Prophet ﷺ modeled patience (ṣabr), self-accountability (muḥāsabah), and
+// constructive response to hardship — without replacing the secular
+// reflective structure that makes Gibbs' model effective.
+var GIBBS_STAGES=[
+  {key:'description',label:'Description',icon:'📝',
+    prompt:'What happened? Describe the situation factually — who, what, when, where — without yet judging or interpreting it.',
+    seerah:'The Prophet ﷺ and his companions narrated events plainly and factually before drawing lessons — the Seerah itself is preserved through precise, factual narration (riwayah) before tafsir (interpretation).'},
+  {key:'feelings',label:'Feelings',icon:'💭',
+    prompt:'What were you thinking and feeling at the time — and how do you feel about it now, looking back?',
+    seerah:'At Ta\'if, the Prophet ﷺ openly expressed his anguish to Allah ("To You, O Allah, I complain of my weakness...") — acknowledging difficult emotions honestly, without suppressing or denying them, is itself part of the Sunnah.'},
+  {key:'evaluation',label:'Evaluation',icon:'⚖️',
+    prompt:'What was good and what was bad about the experience? Be honest — what went well, and what didn\'t?',
+    seerah:'After the setback at Uhud, the Qur\'an itself evaluates what went right and wrong in the battle (Surah Aal-e-Imran) — honest evaluation, even of one\'s own setbacks, is a Qur\'anic methodology, not self-criticism for its own sake.'},
+  {key:'analysis',label:'Analysis',icon:'🔍',
+    prompt:'Why did things happen this way? What sense can you make of the situation? What factors (yours or others\') contributed?',
+    seerah:'The Prophet ﷺ analyzed the causes behind the Hunayn setback (overconfidence after victory) and corrected course rather than assigning blame alone — analysis precedes correction.'},
+  {key:'conclusion',label:'Conclusion',icon:'🎯',
+    prompt:'What did you learn? What could have been done differently? What general conclusion can you draw for next time?',
+    seerah:'Ka\'b ibn Malik\'s honest account of his delay at Tabuk, and his acceptance of the consequences and lessons, shows how a sincere conclusion — without excuse-making — leads to growth and eventually Allah\'s forgiveness (Surah At-Tawbah).'},
+  {key:'actionPlan',label:'Action Plan',icon:'🚀',
+    prompt:'If this situation arose again, what would you do? What concrete, specific steps will you take going forward?',
+    seerah:'After the Treaty of Hudaybiyyah seemed difficult to accept, the Prophet ﷺ immediately moved to constructive action (shaving his head, sacrificing the animals) — turning reflection into decisive next steps rather than dwelling.'}
+];
+var GIBBS_TAG_SUGGESTIONS=['Studies','Family','Friendship','Patience (Ṣabr)','Anger','Anxiety','Disappointment','Conflict','Time Management','Health','Spiritual Low','Gratitude','Exam Stress','Self-Doubt'];
+
+var _gibbsCurrentEntry=null;
+var _gibbsCurrentStageIdx=0;
+
+function openGibbsEntry(existingId){
+  _gibbsCurrentEntry=existingId?state.deen.gibbsEntries.find(function(e){return e.id===existingId;}):{
+    id:genId(),date:todayStr(),tags:[],
+    description:'',feelings:'',evaluation:'',analysis:'',conclusion:'',actionPlan:'',
+    completedStages:[]
+  };
+  _gibbsCurrentStageIdx=0;
+  document.getElementById('gibbs-entry-overlay').classList.add('show');
+  renderGibbsStepper();
+  renderGibbsStageContent();
+}
+function closeGibbsEntry(){
+  if(_gibbsCurrentEntry){
+    // Capture whatever is currently typed in the visible stage textarea
+    // BEFORE persisting — otherwise closing mid-stage silently drops it.
+    gibbsSaveCurrentStageInput();
+    var hasContent=GIBBS_STAGES.some(function(s){return _gibbsCurrentEntry[s.key]&&_gibbsCurrentEntry[s.key].trim();});
+    if(hasContent){
+      var existing=state.deen.gibbsEntries.find(function(e){return e.id===_gibbsCurrentEntry.id;});
+      if(existing) Object.assign(existing,_gibbsCurrentEntry);
+      else state.deen.gibbsEntries.unshift(_gibbsCurrentEntry);
+      saveState();
+    }
+    // If every stage is still empty, don't save a blank placeholder entry —
+    // avoids cluttering the list with empty reflections from accidental opens.
+  }
+  document.getElementById('gibbs-entry-overlay').classList.remove('show');
+  _gibbsCurrentEntry=null;
+  renderGibbsList();
+}
+function renderGibbsStepper(){
+  var el=document.getElementById('gibbs-stepper'); if(!el) return;
+  el.innerHTML=GIBBS_STAGES.map(function(s,i){
+    var filled=_gibbsCurrentEntry[s.key]&&_gibbsCurrentEntry[s.key].trim().length>0;
+    var active=i===_gibbsCurrentStageIdx;
+    return '<div class="gibbs-stage-pill '+(active?'active':filled?'filled':'')+'" onclick="gibbsGoStage('+i+')">'+s.icon+' '+s.label+(filled?' ✓':'')+'</div>';
+  }).join('');
+}
+function gibbsGoStage(i){_gibbsCurrentStageIdx=i;renderGibbsStepper();renderGibbsStageContent();}
+function gibbsNextStage(){
+  gibbsSaveCurrentStageInput();
+  if(_gibbsCurrentStageIdx<GIBBS_STAGES.length-1){_gibbsCurrentStageIdx++;renderGibbsStepper();renderGibbsStageContent();}
+  else { showToast('🌟 Reflection complete — Allah knows your striving (mujahadah). Saved.','success'); closeGibbsEntry(); }
+}
+function gibbsPrevStage(){
+  gibbsSaveCurrentStageInput();
+  if(_gibbsCurrentStageIdx>0){_gibbsCurrentStageIdx--;renderGibbsStepper();renderGibbsStageContent();}
+}
+function gibbsSaveCurrentStageInput(){
+  var stage=GIBBS_STAGES[_gibbsCurrentStageIdx];
+  var ta=document.getElementById('gibbs-input-'+stage.key);
+  if(ta) _gibbsCurrentEntry[stage.key]=ta.value;
+  if(_gibbsCurrentStageIdx===0){
+    var tagsInput=document.getElementById('gibbs-tags-input');
+    if(tagsInput) _gibbsCurrentEntry.tags=tagsInput.value.split(',').map(function(t){return t.trim();}).filter(Boolean);
+  }
+}
+function renderGibbsStageContent(){
+  var el=document.getElementById('gibbs-stage-content'); if(!el) return;
+  var stage=GIBBS_STAGES[_gibbsCurrentStageIdx];
+  var isFirst=_gibbsCurrentStageIdx===0;
+  var nextBtn=document.getElementById('gibbs-next-btn'),prevBtn=document.getElementById('gibbs-prev-btn');
+  if(nextBtn) nextBtn.textContent=_gibbsCurrentStageIdx===GIBBS_STAGES.length-1?'Finish ✓':'Next ›';
+  if(prevBtn) prevBtn.style.visibility=isFirst?'hidden':'visible';
+
+  el.innerHTML=
+    (isFirst?'<div class="form-group"><label class="form-label">Tags (comma-separated)</label><input class="form-input" id="gibbs-tags-input" placeholder="e.g. Studies, Anxiety, Exam Stress" value="'+(_gibbsCurrentEntry.tags||[]).join(', ')+'"><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">'+
+      GIBBS_TAG_SUGGESTIONS.map(function(tg){return '<span class="gibbs-tag" style="cursor:pointer" onclick="gibbsAddSuggestedTag(\''+tg+'\')">+ '+tg+'</span>';}).join('')+
+    '</div></div>':'')+
+    '<div class="gibbs-prompt-box">'+
+      '<div class="gibbs-prompt-icon">'+stage.icon+'</div>'+
+      '<div style="font-family:var(--font-head);font-weight:800;font-size:15px;margin:6px 0 4px">'+stage.label+'</div>'+
+      '<div class="gibbs-prompt-q">'+stage.prompt+'</div>'+
+      '<textarea class="notes-textarea" id="gibbs-input-'+stage.key+'" style="min-height:110px" placeholder="Write freely — there is no wrong answer here...">'+(_gibbsCurrentEntry[stage.key]||'')+'</textarea>'+
+      '<div class="gibbs-seerah-note">🌟 <b>Seerah Lens:</b> '+stage.seerah+'</div>'+
+    '</div>';
+}
+function gibbsAddSuggestedTag(tag){
+  var input=document.getElementById('gibbs-tags-input'); if(!input) return;
+  var cur=input.value.split(',').map(function(t){return t.trim();}).filter(Boolean);
+  if(cur.indexOf(tag)<0){cur.push(tag);input.value=cur.join(', ');}
+}
+function deleteGibbsEntry(id){
+  if(!confirm('Delete this reflection entry?')) return;
+  state.deen.gibbsEntries=state.deen.gibbsEntries.filter(function(e){return e.id!==id;});
+  saveState(); renderGibbsList(); closeGibbsView();
+  showToast('Reflection deleted','warn');
+}
+function viewGibbsEntry(id){
+  var e=state.deen.gibbsEntries.find(function(x){return x.id===id;}); if(!e) return;
+  var el=document.getElementById('gibbs-view-content'); if(!el) return;
+  el.innerHTML=
+    '<div class="modal-title">🌟 Reflection — '+e.date+'</div>'+
+    '<div style="margin-bottom:10px">'+(e.tags||[]).map(function(t){return '<span class="gibbs-tag">'+t+'</span>';}).join('')+'</div>'+
+    GIBBS_STAGES.map(function(s){
+      if(!e[s.key]) return '';
+      return '<div class="gibbs-prompt-box"><div style="font-weight:700;font-size:13px;margin-bottom:6px">'+s.icon+' '+s.label+'</div><div style="font-size:13px;color:var(--text);white-space:pre-wrap;line-height:1.6">'+e[s.key].replace(/</g,'&lt;')+'</div></div>';
+    }).join('')+
+    '<div class="modal-footer"><button class="btn btn-danger" onclick="deleteGibbsEntry(\''+e.id+'\')">🗑️ Delete</button><button class="btn btn-secondary" onclick="closeGibbsView();openGibbsEntry(\''+e.id+'\')">✏️ Edit</button><button class="btn btn-primary" onclick="closeGibbsView()">Close</button></div>';
+  document.getElementById('gibbs-view-overlay').classList.add('show');
+}
+function closeGibbsView(){document.getElementById('gibbs-view-overlay').classList.remove('show');}
+function renderGibbsList(){
+  var el=document.getElementById('deen-gibbs-list'); if(!el) return;
+  var entries=state.deen.gibbsEntries||[];
+  if(!entries.length){el.innerHTML='<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px 0">No reflections logged yet. When something difficult happens, log it here and work through it step by step — this builds long-term emotional resilience and self-awareness, the same way clinical reflective practice does for doctors.</div>';return;}
+  el.innerHTML=entries.map(function(e){
+    var stagesFilled=GIBBS_STAGES.filter(function(s){return e[s.key]&&e[s.key].trim();}).length;
+    var complete=stagesFilled===GIBBS_STAGES.length;
+    var preview=e.description?e.description.slice(0,90)+(e.description.length>90?'…':''):'(no description yet)';
+    return '<div class="gibbs-entry-card" onclick="viewGibbsEntry(\''+e.id+'\')">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'+
+        '<span style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">'+e.date+'</span>'+
+        '<span style="font-size:10px;color:'+(complete?'var(--green)':'var(--yellow)')+'">'+(complete?'✅ Complete':stagesFilled+'/6 stages')+'</span>'+
+      '</div>'+
+      '<div style="font-size:13px;margin-bottom:6px">'+preview.replace(/</g,'&lt;')+'</div>'+
+      '<div>'+(e.tags||[]).map(function(t){return '<span class="gibbs-tag">'+t+'</span>';}).join('')+'</div>'+
+    '</div>';
+  }).join('');
+}
 
 // ─────────────────────────────────────────────
 //  DATA MANAGEMENT
