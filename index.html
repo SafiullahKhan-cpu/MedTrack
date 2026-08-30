@@ -100,6 +100,30 @@ body::before {
 }
 .nav-tab:hover { color: var(--text); background: var(--surface2); }
 .nav-tab.active { background: var(--primary-dim); color: var(--primary); }
+
+/* Secondary-tab "More" menu — keeps the primary nav to 6 focused items
+   (Home/Subjects/Revision/Diary/Stats/More) instead of 9 competing tabs. */
+.nav-more-wrap { position: relative; display: inline-block; }
+.nav-more-panel {
+  display: none; position: absolute; top: calc(100% + 6px); left: 0;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--r-sm); box-shadow: 0 10px 28px rgba(0,0,0,.35);
+  min-width: 150px; z-index: 300; padding: 5px; flex-direction: column; gap: 2px;
+}
+.nav-more-panel.open { display: flex; }
+.nav-more-panel .nav-tab { width: 100%; justify-content: flex-start; padding: 8px 12px; }
+
+/* ── ZEN / FOCUS MODE ──────────────────────────────────────────────
+   Toggled by toggleZenMode(). Strips secondary chrome so the screen holds
+   only what's needed to study right now: core nav, due work, timer. */
+body.zen-mode .nav-more-wrap { display: none; }
+body.zen-mode .quote-box,
+body.zen-mode .why-started-box,
+body.zen-mode .islamic-toggle,
+body.zen-mode .booster-greeting { display: none !important; }
+body.zen-mode #topnav { padding-top: 4px; padding-bottom: 4px; }
+body.zen-mode .nav-brand { opacity: .55; font-size: 13px; }
+#zen-toggle-btn.active { background: var(--primary-dim); color: var(--primary); border-color: var(--primary); }
 .nav-search-wrap { flex: 1; max-width: 380px; position: relative; }
 .nav-search-wrap input {
   width: 100%; background: var(--surface2);
@@ -1958,10 +1982,15 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
     <button class="nav-tab" id="tab-revision" onclick="showView('revision')">🔁 Revision</button>
     <button class="nav-tab" id="tab-diary" onclick="showView('diary')">📔 Diary</button>
     <button class="nav-tab" id="tab-analytics" onclick="showView('analytics')">📊 Stats</button>
-    <button class="nav-tab" id="tab-deen" onclick="showView('deen')">🕌 Deen</button>
-    <button class="nav-tab" id="tab-books" onclick="showView('books')">📚 Books</button>
-    <button class="nav-tab" id="tab-personality" onclick="showView('personality')">🌱 Growth</button>
-    <button class="nav-tab" id="tab-tech" onclick="showView('tech')">💻 Tech</button>
+    <div class="nav-more-wrap">
+      <button class="nav-tab" id="nav-more-btn" onclick="toggleNavMore(event)">⋯ More</button>
+      <div class="nav-more-panel" id="nav-more-panel">
+        <button class="nav-tab" id="tab-deen" onclick="showView('deen');closeNavMore()">🕌 Deen</button>
+        <button class="nav-tab" id="tab-books" onclick="showView('books');closeNavMore()">📚 Books</button>
+        <button class="nav-tab" id="tab-personality" onclick="showView('personality');closeNavMore()">🌱 Growth</button>
+        <button class="nav-tab" id="tab-tech" onclick="showView('tech');closeNavMore()">💻 Tech</button>
+      </div>
+    </div>
   </div>
   <div class="nav-search-wrap">
     <span class="search-icon">🔍</span>
@@ -1969,6 +1998,7 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
     <div id="search-dropdown"></div>
   </div>
   <div class="nav-right">
+    <button id="zen-toggle-btn" class="nav-btn" onclick="toggleZenMode()" title="Zen Mode — hide non-essential chrome">🧘 <span class="hide-mob">Zen</span></button>
     <button class="nav-btn" onclick="openPomodoro()" title="Pomodoro Timer">🍅 <span class="hide-mob">Focus</span></button>
     <button class="nav-btn" onclick="openScheduleImport()" title="Load Daily Schedule">📅 <span class="hide-mob">Schedule</span></button>
     <button class="nav-btn" onclick="openJsonImport()" title="Import Syllabus">⬆ <span class="hide-mob">Import</span></button>
@@ -2775,14 +2805,16 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
   <div class="modal modal-xl">
     <button class="modal-close" onclick="closeScheduleImport()">✕</button>
     <div class="modal-title">📔 Load Schedule into Diary</div>
-    <div class="modal-subtitle">Load or paste an AI-generated JSON schedule — links automatically to your folders!</div>
+    <div class="modal-subtitle">One click generates a prompt with your entire live topic list, priorities & exam countdown already baked in — no retyping.</div>
 
     <!-- AI Prompt Copy -->
-    <div style="background:var(--primary-dim);border:1px solid rgba(0,210,190,0.3);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;">
+    <div style="background:var(--primary-dim);border:1px solid rgba(0,210,190,0.3);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:12px;display:flex;align-items:flex-start;gap:10px;">
       <span style="font-size:20px;flex-shrink:0">🤖</span>
-      <div>
-        <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:4px">Step 1 — Ask AI to generate your schedule</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Copy this prompt → paste into Claude / ChatGPT → give it your timetable → get the JSON back → paste it below or upload the file</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:4px">Step 1 — Generate your schedule</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">This prompt already contains your full folder/topic structure, due & weak topics, streak and exam countdown — the AI reuses what exists instead of you re-typing it. Copy → paste into Claude/ChatGPT → paste the JSON it gives back below.</div>
+        <label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:3px">Optional — one-off context for today only (e.g. "only 3 hours available, exam-hall visit this evening")</label>
+        <input class="form-input" id="sched-extra-context" placeholder="Leave blank if nothing unusual today" style="margin-bottom:8px;font-size:12px">
         <button class="btn btn-secondary btn-sm" onclick="copySchedulePrompt()" id="sched-prompt-copy-btn">📋 Copy AI Prompt</button>
       </div>
     </div>
@@ -2997,6 +3029,27 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
     <button class="modal-close" onclick="closeSettingsPanel()">✕</button>
     <div class="modal-title">⚙️ Settings & Data</div>
     <div class="modal-subtitle">Your data is seamlessly saved to the cloud automatically.</div>
+
+    <div class="settings-section-title">🎯 Exam & Preparation Setup</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">
+      Used to scale urgency in your AI-generated schedules — closer to the exam, planning shifts automatically toward high-yield + weak-topic + mock-question drilling; far out, it favors deep foundational learning and interleaving.
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <div style="flex:1;min-width:160px">
+        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px">Exam / Target name</label>
+        <input class="form-input" id="settings-exam-name" placeholder="e.g. Final Professional MBBS" value="" oninput="saveExamSettings()">
+      </div>
+      <div style="flex:1;min-width:160px">
+        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px">Exam date</label>
+        <input class="form-input" type="date" id="settings-exam-date" oninput="saveExamSettings()">
+      </div>
+      <div style="flex:1;min-width:140px">
+        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px">Realistic daily capacity (hrs)</label>
+        <input class="form-input" type="number" min="1" max="16" step="0.5" id="settings-daily-capacity" oninput="saveExamSettings()">
+      </div>
+    </div>
+    <div id="settings-exam-countdown" style="font-size:12px;color:var(--primary);margin-bottom:16px"></div>
+
     <div class="settings-section-title">💾 Local Data & Backup</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-secondary btn-sm" onclick="exportBackup();closeSettingsPanel()">💾 Export Backup</button>
@@ -3192,7 +3245,12 @@ var PROMPTS={
   teach:function(t){return 'Teach "'+t+'" to a first-year MBBS student using Feynman technique.\n\nUse: simple analogies, step-by-step logic, clinical scenarios, top 5 must-remember points.';},
   htmlStudyFile:function(t){return 'You are an advanced Medical AI in MedTrack Pro.\n\nGenerate a COMPLETE INTERACTIVE HTML STUDY FILE for: "'+t+'"\n\nUse the FIKRI LEARNING SYSTEM:\n1. Conceptual Foundation\n2. Mechanism/Pathophysiology\n3. System Integration\n4. Clinical Lens\n5. Diagnostic Thinking\n6. Management Logic\n7. Exam Intelligence\n\nOutput: ONE complete self-contained HTML file. Dark UI (bg #070D1A, accent #00D2BE). 7 tabs: Fikri, Notes, MCQs, Recall, Cases, Revision, Schedule. Inline CSS+JS only. ZERO placeholder text.';}
 };
-var SCHEDULE_AI_PROMPT='You are an advanced Medical AI integrated into MedTrack Pro.\n\nGenerate a DAILY STUDY SCHEDULE. OUTPUT ONLY valid JSON — no markdown, no backticks.\n\nSchema:\n{\n  "date": "YYYY-MM-DD",\n  "hijriDate": "e.g. 15 Dhul Hijjah 1446",\n  "dayTitle": "Meaningful title",\n  "schedule": [\n    {\n      "id": "unique-slug",\n      "time": "08:00 - 09:30",\n      "subject": "Physiology",\n      "topic": "GFR and Filtration Barrier",\n      "type": "learn",\n      "emoji": "🧬",\n      "tags": ["physiology","renal"],\n      "difficulty": "deep",\n      "notes": "Focus on podocyte role",\n      "microSteps": ["Draw GFR diagram","Explain Bowman space","List Starling forces"]\n    }\n  ]\n}\n\nRULES: type ∈ {learn,revise,active-recall,mcq,clinical,break} · difficulty ∈ {light,moderate,deep} · microSteps: 2-4 short sub-tasks per slot · include breaks · max 6-7 hrs/day · hijriDate MANDATORY\n\nMy timetable/topics for today:\n[PASTE YOUR TIMETABLE HERE]';
+// SCHEDULE_AI_PROMPT is no longer a static string (see requirement: the prompt
+// must always carry the REAL, CURRENT folder/topic structure so the external AI
+// reuses what already exists instead of the user re-typing their curriculum
+// every day, and instead of the AI inventing near-duplicate topic names).
+// It is now built fresh, on demand, by buildScheduleAIPrompt() — see below,
+// near copySchedulePrompt().
 
 // ─────────────────────────────────────────────
 //  STATE
@@ -3206,7 +3264,7 @@ var state={
   dailySchedule:{date:null,dayTitle:'',items:[],completedIds:[],microChecks:{}},
   diaryRevised:{},
   mclChecks:{},
-  settings:{dailyCapacity:6},
+  settings:{dailyCapacity:6,examName:'',examDate:null},
   deen:{
     location:{city:'Islamabad',lat:33.6844,lng:73.0479,tz:5,asrMethod:'hanafi'},
     targets:{reading:3,manzil:0.25,tafseer:1},
@@ -3293,7 +3351,10 @@ function loadState(){
     state.dailySchedule.microChecks=state.dailySchedule.microChecks||{};
     state.diaryRevised=state.diaryRevised||{};
     state.mclChecks=state.mclChecks||{};
-    state.settings=state.settings||{dailyCapacity:6};
+    state.settings=state.settings||{dailyCapacity:6,examName:'',examDate:null};
+    if(state.settings.dailyCapacity===undefined) state.settings.dailyCapacity=6;
+    if(state.settings.examName===undefined) state.settings.examName='';
+    if(state.settings.examDate===undefined) state.settings.examDate=null;
     state.deen=state.deen||{};
     state.deen.location=state.deen.location||{city:'Islamabad',lat:33.6844,lng:73.0479,tz:5,asrMethod:'hanafi'};
     state.deen.targets=state.deen.targets||{reading:3,manzil:0.25,tafseer:1};
@@ -3656,6 +3717,37 @@ function showView(view){
     else if(view==='books'||view==='personality'||view==='tech') renderModuleView(view);
   }catch(e){console.error('View render error',e);}
 }
+// ─────────────────────────────────────────────
+//  NAV "MORE" MENU + ZEN/FOCUS MODE  (distraction-free UI)
+// ─────────────────────────────────────────────
+function toggleNavMore(e){
+  if(e) e.stopPropagation();
+  var p=document.getElementById('nav-more-panel'); if(!p) return;
+  p.classList.toggle('open');
+}
+function closeNavMore(){
+  var p=document.getElementById('nav-more-panel'); if(p) p.classList.remove('open');
+}
+document.addEventListener('click',function(e){
+  var wrap=document.querySelector('.nav-more-wrap');
+  if(wrap && !wrap.contains(e.target)) closeNavMore();
+});
+var ZEN_KEY='medtrack_zen_mode';
+function toggleZenMode(){
+  var on=!document.body.classList.contains('zen-mode');
+  applyZenMode(on);
+  try{localStorage.setItem(ZEN_KEY,on?'1':'0');}catch(e){}
+}
+function applyZenMode(on){
+  document.body.classList.toggle('zen-mode',on);
+  var btn=document.getElementById('zen-toggle-btn');
+  if(btn) btn.classList.toggle('active',on);
+}
+function loadZenMode(){
+  var on=false;
+  try{on=localStorage.getItem(ZEN_KEY)==='1';}catch(e){}
+  applyZenMode(on);
+}
 function navigateToFolder(id){
   currentFolderId=id; currentView='subfolder';
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
@@ -3804,13 +3896,22 @@ function renderBoosterPanel(){
   var ba=document.getElementById('booster-action'); if(ba) ba.textContent=actions[Math.floor(Date.now()/86400000)%actions.length];
 }
 function renderHomeStats(){
+  syncStreakDecay();
   var all=getAllTopics(),total=all.length,mastered=all.filter(function(x){return x.topic.stages.mastered;}).length;
   var due=getDueTopics().length,pct=total?Math.round((mastered/total)*100):0;
   var grid=document.getElementById('home-stats-grid'); if(!grid) return;
+  var examCard;
+  var ec=getExamCountdown();
+  if(ec){
+    var urgent=ec.days<=14&&ec.days>=0;
+    examCard='<div class="stat-card '+(urgent?'c-red':'c-blue')+'" onclick="openSettingsPanel()" style="cursor:pointer" title="'+esc(ec.name)+'"><div class="stat-label">'+(ec.days>=0?'Days to Exam':'Exam Passed')+'</div><div class="stat-value">'+(ec.days>=0?ec.days:'—')+'</div><div class="stat-sub">'+esc(ec.name.length>16?ec.name.slice(0,16)+'…':ec.name)+'</div><div class="stat-icon">'+(urgent?'⏳':'🎯')+'</div></div>';
+  } else {
+    examCard='<div class="stat-card c-blue"><div class="stat-label">Folders</div><div class="stat-value">'+state.folders.length+'</div><div class="stat-sub">root subjects</div><div class="stat-icon">📁</div></div>';
+  }
   grid.innerHTML='<div class="stat-card c-teal"><div class="stat-label">Total Topics</div><div class="stat-value">'+total+'</div><div class="stat-sub">in all folders</div><div class="stat-icon">📚</div></div>'+
     '<div class="stat-card c-green"><div class="stat-label">Mastered</div><div class="stat-value">'+mastered+'</div><div class="stat-sub">'+pct+'% complete</div><div class="stat-icon">🏆</div></div>'+
     '<div class="stat-card c-red"><div class="stat-label">Due Today</div><div class="stat-value">'+due+'</div><div class="stat-sub">need review</div><div class="stat-icon">🔔</div></div>'+
-    '<div class="stat-card c-blue"><div class="stat-label">Folders</div><div class="stat-value">'+state.folders.length+'</div><div class="stat-sub">root subjects</div><div class="stat-icon">📁</div></div>'+
+    examCard+
     '<div class="stat-card c-yellow"><div class="stat-label">Streak</div><div class="stat-value">'+state.streak.current+'</div><div class="stat-sub">days</div><div class="stat-icon">🔥</div></div>'+
     '<div class="stat-card c-purple"><div class="stat-label">Today Time</div><div class="stat-value">'+fmtHrsMin(timerElapsed)+'</div><div class="stat-sub">studied</div><div class="stat-icon">⏱</div></div>';
 }
@@ -3821,7 +3922,30 @@ function updateStreak(){
   if(state.streak.current>state.streak.best) state.streak.best=state.streak.current;
   state.streak.lastDate=today; saveState(); renderStreakUI();
 }
+// ─────────────────────────────────────────────
+//  STREAK DECAY — BUG FIX
+// ─────────────────────────────────────────────
+// Root cause of "streak never zeroes": state.streak.current was only ever
+// corrected inside updateStreak(), which only runs when the user logs NEW
+// activity. If the user studied on day 1 (current=3, say) and then never
+// opened the app again, current stayed frozen at 3 forever — the UI simply
+// echoed whatever was last saved, with no awareness that today's date had
+// moved on. A streak is a claim about *today's* state ("still unbroken as
+// of right now"), so it must be re-derived every time it's displayed, not
+// just when it's incremented. This runs on every load/render and physically
+// corrects the persisted value to 0 the moment more than one day has been
+// missed (today not logged AND yesterday not logged) — no grace period,
+// exactly like Duolingo/Anki-style streaks. It never advances the streak
+// itself (only updateStreak() may do that, on real activity).
+function syncStreakDecay(){
+  state.streak=state.streak||{current:0,best:0,lastDate:null};
+  var today=todayStr();
+  if(state.streak.lastDate && state.streak.lastDate!==today && state.streak.lastDate!==addDays(today,-1)){
+    if(state.streak.current!==0){ state.streak.current=0; saveState(); }
+  }
+}
 function renderStreakUI(){
+  syncStreakDecay();
   var sn=document.getElementById('streak-number'); if(sn) sn.textContent=state.streak.current;
   var sb=document.getElementById('streak-best'); if(sb) sb.textContent=state.streak.best;
 }
@@ -5491,6 +5615,7 @@ function buildModFolderCard(mid,folder){
       '<div class="folder-actions">'+
         '<button class="icon-btn" onclick="event.stopPropagation();openModAddFolder(\''+mid+'\',\''+folder.id+'\')" title="Add subfolder">📂+</button>'+
         '<button class="icon-btn" onclick="event.stopPropagation();openModAddNode(\''+mid+'\',\''+folder.id+'\')" title="Add item">+</button>'+
+        '<button class="icon-btn" onclick="event.stopPropagation();openModMove(\''+mid+'\',\'folder\',\''+folder.id+'\')" title="Move">📦</button>'+
         '<button class="icon-btn danger" onclick="event.stopPropagation();deleteModFolder(\''+mid+'\',\''+folder.id+'\')" title="Delete">🗑️</button>'+
       '</div>'+
     '</div>'+
@@ -5579,6 +5704,7 @@ function buildModNodeCard(mid,n,folder,def){
       // Actions row
       '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">'+
         '<button class="btn btn-ghost btn-sm" onclick="modToggleWeak(\''+mid+'\',\''+n.id+'\')">⚠️ '+(n.weakFlag?'Remove Weak':'Flag Weak')+'</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="openModMove(\''+mid+'\',\'node\',\''+n.id+'\')">📦 Move</button>'+
         '<button class="btn btn-danger btn-sm" onclick="deleteModNode(\''+mid+'\',\''+n.id+'\')" style="margin-left:auto">🗑️</button>'+
       '</div>'+
     '</div>'+
@@ -5732,10 +5858,102 @@ function deleteModNode(mid,nodeId){
   saveState(); renderModuleView(mid);
   showToast('Item deleted','warn');
 }
-// Move modal stubs (reuse the main move-tree patterns)
-function closeModMove(){document.getElementById('mod-move-overlay').classList.remove('show');}
-function modFilterMoveTree(q){} // stub — extend if needed
-function confirmModMove(){closeModMove();} // stub — full impl would mirror _removeFolderFromParent
+// ─────────────────────────────────────────────
+//  MOVE ITEM (Books/Personality/Tech modules) — was dead/stub code with no
+//  way to open it and no-op confirm; implemented to mirror the working
+//  main-Subjects move-tree pattern (openMoveTopic/confirmMoveTopic above).
+// ─────────────────────────────────────────────
+var _modMoveItem=null, _modMoveSelectedDest=null;
+function openModMove(mid,type,id){
+  var label;
+  if(type==='node'){ var r=modFindNode(mid,id); if(!r) return; label=r.node.name; }
+  else { var f=modFindFolder(mid,id); if(!f) return; label=f.name; }
+  _modMoveItem={mid:mid,type:type,id:id};
+  _modMoveSelectedDest=null;
+  document.getElementById('mod-move-title').textContent=(type==='node'?'📦 Move Item':'📂 Move Folder');
+  document.getElementById('mod-move-subtitle').textContent='"'+label+'" → choose destination'+(type==='folder'?' (or Root)':'');
+  var btn=document.getElementById('mod-move-confirm-btn'); if(btn) btn.disabled=true;
+  document.getElementById('mod-move-search').value='';
+  _modBuildMoveTree('');
+  document.getElementById('mod-move-overlay').classList.add('show');
+}
+function modFilterMoveTree(q){_modBuildMoveTree((q||'').toLowerCase());}
+function _modBuildMoveTree(q){
+  var container=document.getElementById('mod-move-tree'); if(!container||!_modMoveItem) return;
+  var html='';
+  if(_modMoveItem.type==='folder'){
+    html+='<div class="move-tree-item'+(_modMoveSelectedDest==='__root__'?' selected':'')+'" data-dest="__root__" onclick="modSelectMoveDest(\'__root__\')" style="padding:10px 14px;border-bottom:1px solid var(--border2);cursor:pointer">'+
+      '<span style="font-size:14px">🏠</span> <span style="font-size:12px;font-weight:600">Root Level (top-level folder)</span></div>';
+  }
+  html+=_modBuildMoveTreeNodes(getModuleState(_modMoveItem.mid).folders,0,q);
+  container.innerHTML=html||'<div style="padding:12px;color:var(--text-muted);font-size:12px;text-align:center">No folders found</div>';
+}
+function _modBuildMoveTreeNodes(folders,depth,q){
+  var html='';
+  (folders||[]).forEach(function(f){
+    if(_modMoveItem.type==='folder'){
+      if(f.id===_modMoveItem.id) return;
+      if(_modIsFolderDescendant(f,_modMoveItem.id)) return;
+    }
+    var matches=!q||(f.name.toLowerCase().indexOf(q)>=0);
+    var childHtml=_modBuildMoveTreeNodes(f.subfolders||[],depth+1,q);
+    if(!matches&&!childHtml) return;
+    var indent=depth*16;
+    var isSelected=_modMoveSelectedDest===f.id;
+    html+='<div class="move-tree-item'+(isSelected?' selected':'')+'" data-dest="'+f.id+'" onclick="modSelectMoveDest(\''+f.id+'\')" style="padding:8px 12px 8px '+(12+indent)+'px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:8px;cursor:pointer">'+
+      (depth>0?'<span style="color:var(--text-dim);font-size:11px">└─</span>':'')+
+      '<span style="font-size:14px">'+(f.icon||'📂')+'</span>'+
+      '<span style="font-size:12px;font-weight:600;flex:1">'+esc(f.name)+'</span>'+
+      '<span style="font-size:10px;color:var(--text-muted)">'+(f.nodes?f.nodes.length:0)+' items</span>'+
+    '</div>';
+    if(childHtml) html+=childHtml;
+  });
+  return html;
+}
+function _modIsFolderDescendant(folder,targetId){
+  if(!folder.subfolders) return false;
+  for(var i=0;i<folder.subfolders.length;i++){
+    if(folder.subfolders[i].id===targetId) return true;
+    if(_modIsFolderDescendant(folder.subfolders[i],targetId)) return true;
+  }
+  return false;
+}
+function modSelectMoveDest(destId){
+  _modMoveSelectedDest=destId;
+  document.querySelectorAll('#mod-move-tree .move-tree-item').forEach(function(el){
+    el.classList.toggle('selected',el.getAttribute('data-dest')===destId);
+  });
+  var btn=document.getElementById('mod-move-confirm-btn'); if(btn) btn.disabled=false;
+}
+function closeModMove(){document.getElementById('mod-move-overlay').classList.remove('show');_modMoveItem=null;_modMoveSelectedDest=null;}
+function confirmModMove(){
+  if(!_modMoveItem||!_modMoveSelectedDest){showToast('Select a destination first','error');return;}
+  var mid=_modMoveItem.mid;
+  if(_modMoveItem.type==='node'){
+    var r=modFindNode(mid,_modMoveItem.id); if(!r){showToast('Item not found','error');closeModMove();return;}
+    if(r.folder.id===_modMoveSelectedDest){closeModMove();return;}
+    var dest=modFindFolder(mid,_modMoveSelectedDest); if(!dest){showToast('Destination not found','error');return;}
+    r.folder.nodes=r.folder.nodes.filter(function(n){return n.id!==_modMoveItem.id;});
+    r.node.parentId=_modMoveSelectedDest; dest.nodes=dest.nodes||[]; dest.nodes.push(r.node);
+    saveState(); closeModMove(); renderModuleView(mid);
+    showToast('📦 Moved to "'+dest.name+'"','success');
+  } else if(_modMoveItem.type==='folder'){
+    var f=modFindFolder(mid,_modMoveItem.id); if(!f){showToast('Folder not found','error');closeModMove();return;}
+    var destFolder=null;
+    if(_modMoveSelectedDest!=='__root__'){
+      destFolder=modFindFolder(mid,_modMoveSelectedDest);
+      if(!destFolder){showToast('Destination not found','error');return;}
+    }
+    _modRemoveFolderFromParent(mid,_modMoveItem.id);
+    f.parentId=(_modMoveSelectedDest==='__root__')?null:_modMoveSelectedDest;
+    if(destFolder){destFolder.subfolders=destFolder.subfolders||[];destFolder.subfolders.push(f);}
+    else{var ms=getModuleState(mid);ms.folders.push(f);}
+    saveState(); closeModMove();
+    if(_curModFolderId===_modMoveItem.id) _curModFolderId=null;
+    renderModuleView(mid);
+    showToast('📦 Moved to "'+(destFolder?destFolder.name:'Root')+'"','success');
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════
 //  UNIFIED DASHBOARD — all-module progress overview
@@ -5810,8 +6028,40 @@ function renderUnifiedDashboard(){
     '</div>';
 }
 
-function openSettingsPanel(){document.getElementById('settings-overlay').classList.add('show');}
+function openSettingsPanel(){
+  document.getElementById('settings-overlay').classList.add('show');
+  var en=document.getElementById('settings-exam-name'); if(en) en.value=state.settings.examName||'';
+  var ed=document.getElementById('settings-exam-date'); if(ed) ed.value=state.settings.examDate||'';
+  var dc=document.getElementById('settings-daily-capacity'); if(dc) dc.value=state.settings.dailyCapacity||6;
+  renderExamCountdown('settings-exam-countdown');
+}
 function closeSettingsPanel(){document.getElementById('settings-overlay').classList.remove('show');}
+function saveExamSettings(){
+  state.settings=state.settings||{};
+  var en=document.getElementById('settings-exam-name'); if(en) state.settings.examName=en.value.trim();
+  var ed=document.getElementById('settings-exam-date'); if(ed) state.settings.examDate=ed.value||null;
+  var dc=document.getElementById('settings-daily-capacity'); if(dc) state.settings.dailyCapacity=parseFloat(dc.value)||6;
+  saveState();
+  renderExamCountdown('settings-exam-countdown');
+  try{renderHomeStats();}catch(e){}
+}
+// Returns {days, label} or null if no exam date is configured.
+function getExamCountdown(){
+  var s=state.settings||{};
+  if(!s.examDate) return null;
+  var today=todayStr();
+  var diffDays=Math.round((new Date(s.examDate+'T00:00:00')-new Date(today+'T00:00:00'))/86400000);
+  return {days:diffDays, name:s.examName||'Exam', date:s.examDate};
+}
+function renderExamCountdown(elId){
+  var el=document.getElementById(elId); if(!el) return;
+  var c=getExamCountdown();
+  if(!c){el.textContent='No exam date set — add one above so your AI-generated schedules can scale urgency automatically.';return;}
+  if(c.days>0) el.innerHTML='⏳ <strong>T-'+c.days+' day'+(c.days!==1?'s':'')+'</strong> to '+esc(c.name)+' ('+c.date+')';
+  else if(c.days===0) el.innerHTML='🔥 <strong>'+esc(c.name)+' is TODAY.</strong>';
+  else el.innerHTML='✅ '+esc(c.name)+' has passed ('+c.date+'). Set a new target when ready.';
+}
+
 var pendingJsonData=null,mergeOption='merge';
 function openJsonImport(){pendingJsonData=null;document.getElementById('import-btn').disabled=true;document.getElementById('import-log').style.display='none';document.getElementById('json-import-overlay').classList.add('show');selectMergeOpt('merge');}
 function closeJsonImport(){document.getElementById('json-import-overlay').classList.remove('show');}
@@ -5969,6 +6219,116 @@ function updateNavAuth(user){
 //  SCHEDULE SYSTEM
 // ─────────────────────────────────────────────
 var pendingScheduleData=null;
+// ─────────────────────────────────────────────
+//  DYNAMIC SCHEDULE AI PROMPT
+// ─────────────────────────────────────────────
+// Serializes the ENTIRE existing subject/topic tree (exact names + IDs) so
+// the prompt always reflects the live app state. This is what lets the
+// external AI reuse what already exists instead of the user re-typing their
+// curriculum every day, and lets MedTrack match returned topics by exact
+// ID on import instead of guessing from names (see importScheduleToTrack).
+function buildFolderStructureText(list,depth){
+  depth=depth||0;
+  var indent='  '.repeat(depth);
+  var out='';
+  (list||[]).forEach(function(f){
+    var topics=f.topics||[];
+    out+=indent+(depth===0?'📁 ':'📂 ')+f.name+(topics.length?' — '+topics.length+' topic'+(topics.length!==1?'s':''):'')+'\n';
+    var today=todayStr();
+    topics.forEach(function(t){
+      var stagesDone=STAGE_KEYS.filter(function(k){return t.stages[k];}).length;
+      var status;
+      if(t.stages.mastered && !t.weakFlag && (!t.nextReviewDate||t.nextReviewDate>today)) status='mastered, not due';
+      else if(t.nextReviewDate && t.nextReviewDate<today) status='OVERDUE since '+t.nextReviewDate;
+      else if(t.nextReviewDate && t.nextReviewDate===today) status='due TODAY';
+      else if(!t.repetitions && stagesDone===0) status='not started';
+      else status='step '+(t.repetitions||0)+'/8'+(t.nextReviewDate?', next review '+t.nextReviewDate:', not yet enrolled in revision');
+      out+=indent+'  - '+t.name+' [id:'+t.id+']'+(t.weakFlag?' ⚠weak':'')+(t.importance&&t.importance.length?' 🏷'+t.importance.join(','):'')+' — '+status+'\n';
+    });
+    out+=buildFolderStructureText(f.subfolders,depth+1);
+  });
+  return out;
+}
+function buildScheduleAIPrompt(){
+  syncStreakDecay();
+  var today=todayStr();
+  var pri=getPrioritizedDueTopics();
+  var ec=getExamCountdown();
+  var cap=(state.settings&&state.settings.dailyCapacity)||6;
+  var structure=buildFolderStructureText(state.folders,0).trim();
+  if(!structure) structure='(No subjects/topics exist yet. Propose a sensible initial folder structure based on what I describe in "extra context" below — MedTrack will create it automatically when I import your JSON.)';
+
+  var criticalList=pri.critical.slice(0,25).map(function(x){return '  - '+x.topic.name+' [id:'+x.topic.id+'] ('+x.folder.name+')';}).join('\n')||'  (none)';
+  var weakList=getAllTopics().filter(function(x){return x.topic.weakFlag;}).slice(0,25).map(function(x){return '  - '+x.topic.name+' [id:'+x.topic.id+']';}).join('\n')||'  (none)';
+
+  var examLine;
+  if(ec && ec.days>=0){
+    var band = ec.days<=14 ? 'URGENT — within 2 weeks. Weight heavily toward high-yield + weak-topic drilling + mock MCQ/clinical-vignette practice. Minimise brand-new deep-dive material.'
+      : ec.days<=45 ? 'Mid-range runway. Balance new coverage with consolidation of weak/overdue material.'
+      : 'Long runway. Prioritise broad foundational coverage and interleaving — spaced repetition will naturally resurface material closer to the exam.';
+    examLine='EXAM: "'+ec.name+'" on '+ec.date+' — T-'+ec.days+' day(s). '+band;
+  } else if(ec){
+    examLine='Exam date "'+ec.name+'" ('+ec.date+') has passed. Treat this as open-ended consolidation until a new target is set.';
+  } else {
+    examLine='No exam date is configured — balance new coverage with due reviews using standard priority (do not ask me about this, just proceed).';
+  }
+
+  var extraEl=document.getElementById('sched-extra-context');
+  var extra=extraEl?extraEl.value.trim():'';
+
+  var prompt=
+'You are an elite medical-education strategist embedded in MedTrack Pro, planning for a student working to become an exceptional, exam-ready, clinically excellent physician. Build TODAY\'S complete study schedule. I should only have to STUDY — you make every planning decision, and you never leave anything for me to figure out.\n\n'+
+
+'════════ MY EXISTING SETUP — USE IT, DO NOT ASK ME TO REPEAT IT ════════\n'+
+'Today: '+today+' ('+new Date(today+'T00:00:00').toLocaleDateString('en-US',{weekday:'long'})+')\n'+
+examLine+'\n'+
+'Daily realistic capacity: '+cap+' hours total (never exceed this across all non-break slots).\n'+
+'Current streak: '+state.streak.current+' day(s) · Total topics tracked: '+getAllTopics().length+'\n\n'+
+
+'FULL EXISTING FOLDER/TOPIC STRUCTURE (exact names + IDs — reuse verbatim, see rule 6 below):\n'+
+structure+'\n\n'+
+
+'🔴 CRITICAL (overdue and/or weak — handle first):\n'+criticalList+'\n\n'+
+'⚠️ ALL WEAK-FLAGGED TOPICS (recall failed before — needs interleaved retrieval, not passive re-reading):\n'+weakList+'\n\n'+
+
+(extra?'📌 MY EXTRA CONTEXT FOR TODAY ONLY (one-off constraints/events — respect these):\n'+extra+'\n\n':'')+
+
+'════════ HOW TO DECIDE — evidence-based, apply silently, don\'t lecture me back on it ════════\n'+
+'1. SPACED REPETITION: fixed 8-step ladder (1,2,3,7,14,30,60,120 days). Anything OVERDUE or "due TODAY" above outranks new material — forgetting is exponential (Ebbinghaus curve), so overdue items lose the most value per hour of delay.\n'+
+'2. INTERLEAVING: never block more than ~90 minutes on one subject consecutively; alternate subjects/topic types — interleaved practice beats blocked practice for retention and transfer (Rohrer & Taylor).\n'+
+'3. ACTIVE RECALL > RE-READING: prefer "active-recall", "mcq" and "clinical" slot types over passive "learn" for anything with prior exposure (repetitions>0 or any stage already ticked). Never schedule passive re-reading of mastered, not-due material — that is pure redundancy.\n'+
+'4. DESIRABLE DIFFICULTY: test weak topics via recall/vignettes BEFORE any note review — retrieval attempts (even failed ones) strengthen memory more than restudying first.\n'+
+'5. COGNITIVE LOAD: cap genuinely NEW/deep topics at 3-4 per day (Miller\'s Law, Sweller\'s cognitive load theory); everything else should be review, MCQs, or consolidation.\n'+
+'6. ZERO REDUNDANCY: never invent a new topic name for something already listed above — copy its exact "topic" name AND put its id (from the [id:...] tag) into a "topicId" field so MedTrack links to the SAME topic instead of duplicating it. Only omit "topicId" when the material is genuinely new and absent above.\n'+
+'7. SLEEP & CONSOLIDATION: avoid scheduling effortful new material in the final hour before a reasonable sleep time — consolidation happens during sleep; late cramming is low-yield.\n'+
+'8. BREAKS: a short "break" slot every 45-90 minutes — sustained attention degrades without them.\n'+
+'9. Every slot must be fully actionable on its own: concrete microSteps, nothing vague, nothing left for me to plan.\n\n'+
+
+'════════ OUTPUT — ONLY valid JSON, nothing else (no markdown fences, no commentary before/after) ════════\n'+
+'{\n'+
+'  "date": "'+today+'",\n'+
+'  "hijriDate": "e.g. 15 Dhul Hijjah 1446",\n'+
+'  "dayTitle": "Meaningful title for the day",\n'+
+'  "schedule": [\n'+
+'    {\n'+
+'      "id": "unique-slug",\n'+
+'      "time": "08:00 - 09:30",\n'+
+'      "subject": "Exact existing folder name, or a sensible new one",\n'+
+'      "topic": "Exact existing topic name from the structure above, OR a new topic name",\n'+
+'      "topicId": "copy the id from [id:...] above if this topic already exists — omit if genuinely new",\n'+
+'      "type": "learn | revise | active-recall | mcq | clinical | break",\n'+
+'      "emoji": "🧬",\n'+
+'      "tags": ["physiology","renal"],\n'+
+'      "difficulty": "light | moderate | deep",\n'+
+'      "notes": "Why this matters right now / what to focus on",\n'+
+'      "microSteps": ["2-4 short, concrete, checkable sub-tasks"]\n'+
+'    }\n'+
+'  ]\n'+
+'}\n\n'+
+'hijriDate is MANDATORY. Fill every field. Cover the full day up to my capacity limit above, then stop.';
+
+  return prompt;
+}
 function openScheduleImport(){
   pendingScheduleData=null;
   var btn=document.getElementById('sched-import-btn');if(btn)btn.disabled=true;
@@ -5981,7 +6341,14 @@ function openScheduleImport(){
   document.getElementById('schedule-import-overlay').classList.add('show');
 }
 function closeScheduleImport(){document.getElementById('schedule-import-overlay').classList.remove('show');}
-function copySchedulePrompt(){navigator.clipboard.writeText(SCHEDULE_AI_PROMPT).then(function(){var btn=document.getElementById('sched-prompt-copy-btn');if(btn){btn.textContent='✅ Copied!';setTimeout(function(){btn.textContent='📋 Copy AI Prompt';},2500);}showToast('📋 AI prompt copied! Paste into Claude or ChatGPT.','success');}).catch(function(){showToast('Copy failed','warn');});}
+function copySchedulePrompt(){
+  var prompt=buildScheduleAIPrompt();
+  navigator.clipboard.writeText(prompt).then(function(){
+    var btn=document.getElementById('sched-prompt-copy-btn');
+    if(btn){btn.textContent='✅ Copied!';setTimeout(function(){btn.textContent='📋 Copy AI Prompt';},2500);}
+    showToast('📋 Full prompt copied — your live topic list, priorities & exam countdown are baked in. Paste into Claude or ChatGPT.','success');
+  }).catch(function(){showToast('Copy failed','warn');});
+}
 function handleSchedDragOver(e){e.preventDefault();document.getElementById('sched-upload-zone').classList.add('drag');}
 function handleSchedDrop(e){e.preventDefault();document.getElementById('sched-upload-zone').classList.remove('drag');var f=e.dataTransfer.files[0];if(f)processScheduleFile(f);}
 function handleSchedFileSelect(e){var f=e.target.files[0];if(f)processScheduleFile(f);}
@@ -6016,29 +6383,54 @@ function copyCurrentJson(){
 function importScheduleToTrack(){
   if(!pendingScheduleData)return;
   var schedDate=pendingScheduleData.date||todayStr();
-  var topicsAdded=0;
+  var topicsAdded=0, topicsReused=0;
   var dayData=dvGetDayData(schedDate);
 
   // Convert each schedule slot into a diary task
   var newTasks=pendingScheduleData.schedule.map(function(slotData){
-    // Auto-create folder/topic if missing (preserve original logic)
-    var folder=state.folders.find(function(f){
-      return f.name.toLowerCase()===(slotData.subject||'').toLowerCase();
-    });
-    if(!folder){
-      folder={id:genId(),parentId:null,name:slotData.subject||'Subject',
-        icon:slotData.emoji||'📁',color:'#3A86FF',label:'',subfolders:[],topics:[]};
-      state.folders.push(folder);
+    var mt=null, folder=null;
+
+    // TIER 1 — exact topicId match (authoritative). buildScheduleAIPrompt()
+    // instructs the AI to echo back the id for anything that already
+    // exists, so when present this is a 100%-certain match — no chance of
+    // creating a duplicate for material MedTrack told the AI about.
+    if(slotData.topicId){
+      var hit=findTopic(slotData.topicId);
+      if(hit){ mt=hit.topic; folder=hit.folder; topicsReused++; }
     }
-    function findMatch(f){
-      var t=f.topics.find(function(x){
-        return x.name.toLowerCase()===(slotData.topic||'').toLowerCase();
-      });
-      if(t)return t;
-      for(var i=0;i<f.subfolders.length;i++){var r=findMatch(f.subfolders[i]);if(r)return r;}
-      return null;
+
+    if(!mt){
+      // TIER 2 — resolve/auto-create the subject folder by name...
+      var subjName=(slotData.subject||'Subject').trim();
+      folder=state.folders.find(function(f){return f.name.trim().toLowerCase()===subjName.toLowerCase();});
+      if(!folder){
+        folder={id:genId(),parentId:null,name:subjName,
+          icon:slotData.emoji||'📁',color:'#3A86FF',label:'',subfolders:[],topics:[]};
+        state.folders.push(folder);
+      }
+      var topicName=(slotData.topic||'').trim();
+      // ...then an exact case-insensitive name match within that folder tree...
+      var findExact=function(f){
+        var t=f.topics.find(function(x){return x.name.trim().toLowerCase()===topicName.toLowerCase();});
+        if(t)return t;
+        for(var i=0;i<f.subfolders.length;i++){var r=findExact(f.subfolders[i]);if(r)return r;}
+        return null;
+      };
+      mt=findExact(folder);
+      if(mt) topicsReused++;
+
+      // ...then a FUZZY fallback (catches near-duplicate phrasing like
+      // "GFR & Filtration Barrier" vs "GFR and Filtration Barrier") before
+      // ever creating something new — this is what actually fixes the
+      // duplicate-topic bug when the AI doesn't send an id.
+      if(!mt && topicName){
+        var scoped=getFolderTopicsRec(folder);
+        var fuzzy=findDuplicateTopics(topicName,0.82).find(function(m){return scoped.indexOf(m.topic)>=0;});
+        if(fuzzy){ mt=fuzzy.topic; topicsReused++; }
+      }
     }
-    var mt=findMatch(folder);
+
+    // TIER 3 — genuinely new topic, nothing above matched.
     if(!mt){
       mt=createTopicData(slotData.topic||'Untitled',folder.id,{
         difficulty:slotData.difficulty,weightage:slotData.weightage,tags:slotData.tags||[]
@@ -6103,7 +6495,8 @@ function importScheduleToTrack(){
   dvCurrentDate=schedDate;
   showView('diary');
 
-  showToast('📔 Schedule loaded into Diary! '+added+' tasks · '+topicsAdded+' topics auto-created','success');
+  showToast('📔 Schedule loaded! '+added+' tasks · '+topicsReused+' linked to existing topics · '+topicsAdded+' new topics created','success');
+  var extraEl=document.getElementById('sched-extra-context'); if(extraEl) extraEl.value=''; // one-off context consumed
 }
 
 function dvDefaultMicroSteps(type){
@@ -6584,6 +6977,7 @@ async function v4SendAi(){
   var inp=document.getElementById('v4-ai-input');if(!inp)return;
   var msg=inp.value.trim();if(!msg)return;inp.value='';
   var btn=document.getElementById('v4-ai-send');if(btn){btn.disabled=true;btn.textContent='...';}
+  syncStreakDecay();
   var allT=getAllTopics();var due=getDueTopics();var weak=allT.filter(function(x){return x.topic.weakFlag;});
   var ctx='User has '+allT.length+' topics, '+due.length+' due today, '+weak.length+' weak topics. Streak: '+state.streak.current+' days.';
   if(weak.length)ctx+='\nWeak: '+weak.slice(0,5).map(function(x){return x.topic.name;}).join(', ');
@@ -6687,6 +7081,7 @@ renderAnalytics=function(){
 // ── INTELLIGENCE BRIEF ──
 function v4RenderBrief(){
   var el=document.getElementById('v4-brief');if(!el)return;
+  syncStreakDecay();
   var today=todayStr();var allT=getAllTopics();
   if(!allT.length){el.innerHTML='';return;}
   var due=getDueTopics();
@@ -8547,7 +8942,7 @@ function dvCopyPromptType(type) {
 }
 
 window.addEventListener('DOMContentLoaded',function(){
-  loadTheme(); loadState(); initTimer(); updatePomodoroDisplay(); renderHome();
+  loadTheme(); loadZenMode(); loadState(); syncStreakDecay(); initTimer(); updatePomodoroDisplay(); renderHome();
   var mob=document.getElementById('mob-nav');if(mob&&window.innerWidth<=768)mob.style.display='block';
   setInterval(function(){if(timerRunning){state.studyTimer.todayElapsed=timerElapsed;saveState();}},30000);
   setInterval(function(){
