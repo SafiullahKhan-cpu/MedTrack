@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MedTrack Pro v3 — Medical Command Center</title>
+<title>MedTrack Pro v4 — Medical Command Center</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
 <style>
 /* ===================================================
-   MEDTRACK PRO v3 — DESIGN SYSTEM
+   MEDTRACK PRO v4 — DESIGN SYSTEM
 =================================================== */
 :root {
   --bg: #060C18;
@@ -3083,12 +3083,16 @@ body.light ::-webkit-scrollbar-thumb { background: var(--surface3); }
 //  the app's existing state-management logic (saveState/loadState)
 //  keeps working unchanged. See supabase_schema.sql + README.md.
 // ─────────────────────────────────────────────
-var SUPABASE_URL = 'https://sfgmyizadlzptubrfagb.supabase.co/';       // e.g. https://xxxxxxxx.supabase.co
-var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmZ215aXphZGx6cHR1YnJmYWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NzA2MDksImV4cCI6MjEwMjQ0NjYwOX0.G6kn10gprhDjE19en8vR5y7nmU2M9bVmYJXXPbsGwkM';
+var SUPABASE_URL = 'https://sfgmyizadlzptubrfagb.supabase.co';   // no trailing slash
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmZ215aXphZGx6cHR1YnJmYWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NzA2MDksImV4cCI6MjEwMjQ0NjYwOX0.G6kn10gprhDjE19en8vR5y7nmU2M9bVmYJXXPbsGwkM'; // anon key is public by design; security comes from RLS
 var supabaseClient=null, currentUser=null, realtimeChannel=null, supabaseSaveTimeout=null, _applyingRemoteState=false;
+var SB_TABLE='medtrack_state';
+var SB_OWNER_KEY='medtrack_local_owner';           // which Supabase user the local copy belongs to
+var SB_CLIENT_ID=(Date.now().toString(36)+Math.random().toString(36).slice(2,8)); // identifies THIS tab/device
+var _sbLastUserId=null, _sbDirty=false, _sbSaving=false, _sbLoaded=false;
 
 function isSupabaseConfigured(){
-  return SUPABASE_URL && SUPABASE_URL.indexOf('YOUR_SUPABASE')!==0 && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY.indexOf('YOUR_SUPABASE')!==0;
+  return !!(SUPABASE_URL && SUPABASE_URL.indexOf('YOUR_SUPABASE')!==0 && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY.indexOf('YOUR_SUPABASE')!==0);
 }
 
 function initSupabase(){
@@ -3103,14 +3107,16 @@ function initSupabase(){
       updateSyncStatus('offline');
       return;
     }
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // Handles initial page load (existing session) + every future sign-in/out
-    supabaseClient.auth.onAuthStateChange(function(_event,session){
-      handleAuthSession(session);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL.replace(/\/+$/,''), SUPABASE_ANON_KEY, {
+      auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}
     });
-    supabaseClient.auth.getSession().then(function(res){
-      handleAuthSession(res && res.data ? res.data.session : null);
+
+    // FIX: the SDK fires INITIAL_SESSION, SIGNED_IN (on every tab refocus) and TOKEN_REFRESHED (hourly).
+    // The old code re-loaded + overwrote local state on EVERY one of them. Now we only react when the
+    // signed-in user actually changes. Work is deferred with setTimeout so we never call supabase-js
+    // from inside its own auth callback (documented deadlock risk).
+    supabaseClient.auth.onAuthStateChange(function(event,session){
+      setTimeout(function(){ handleAuthSession(session,event); },0);
     });
   }catch(e){
     console.warn('Supabase init failed (offline mode)',e);
@@ -3118,13 +3124,19 @@ function initSupabase(){
   }
 }
 
-function handleAuthSession(session){
-  if(session && session.user){
+function handleAuthSession(session,event){
+  var uid = session && session.user ? session.user.id : null;
+  if(uid===_sbLastUserId){                 // same user (token refresh / refocus) — nothing to reload
+    if(session && session.user) currentUser=session.user;
+    return;
+  }
+  _sbLastUserId=uid;
+  if(uid){
     currentUser=session.user; updateNavAuth(currentUser); updateSyncStatus('loading');
     loadRemoteState();
     subscribeRealtime();
   } else {
-    currentUser=null; updateNavAuth(null);
+    currentUser=null; _sbLoaded=false; updateNavAuth(null);
     if(realtimeChannel){ try{supabaseClient.removeChannel(realtimeChannel);}catch(e){} realtimeChannel=null; }
     updateSyncStatus('offline');
   }
@@ -3133,67 +3145,116 @@ function handleAuthSession(session){
 function applyRemoteState(d){
   if(!d) return;
   _applyingRemoteState=true;
-  var ls = state.dailySchedule;
-  state = Object.assign({}, state, d);
-  if(!state.dailySchedule||!state.dailySchedule.items) state.dailySchedule=ls;
-  state.dailySchedule = state.dailySchedule||{date:null,dayTitle:'',items:[],completedIds:[],microChecks:{}};
-  state.dailySchedule.microChecks = state.dailySchedule.microChecks||{};
-  patchTree(state.folders);
-  try{localStorage.setItem(APP_KEY,JSON.stringify(state));}catch(e){}
-  initTimer(); updatePomodoroDisplay(); renderHome();
-  if(currentView==='folders') renderFolders();
-  if(currentView==='subfolder') renderSubfolderView();
-  if(currentView==='revision') renderRevisionView();
-  if(currentView==='analytics') renderAnalytics();
-  _applyingRemoteState=false;
+  try{
+    var ls = state.dailySchedule;
+    var clean = Object.assign({}, d); delete clean._sync;     // strip sync metadata
+    state = Object.assign({}, state, clean);
+    if(!state.dailySchedule||!state.dailySchedule.items) state.dailySchedule=ls;
+    state.dailySchedule = state.dailySchedule||{date:null,dayTitle:'',items:[],completedIds:[],microChecks:{}};
+    state.dailySchedule.microChecks = state.dailySchedule.microChecks||{};
+    patchTree(state.folders);
+    try{localStorage.setItem(APP_KEY,JSON.stringify(state));}catch(e){}
+    initTimer(); updatePomodoroDisplay(); renderHome();
+    if(currentView==='folders') renderFolders();
+    if(currentView==='subfolder') renderSubfolderView();
+    if(currentView==='revision') renderRevisionView();
+    if(currentView==='analytics') renderAnalytics();
+  } finally { _applyingRemoteState=false; }
 }
 
 function loadRemoteState(){
   if(!supabaseClient||!currentUser) return;
-  supabaseClient.from('medtrack_state').select('data').eq('user_id',currentUser.id).maybeSingle()
+  var uid=currentUser.id;
+  supabaseClient.from(SB_TABLE).select('data').eq('user_id',uid).maybeSingle()
     .then(function(res){
+      if(!currentUser||currentUser.id!==uid) return;           // user changed while loading
       if(res.error){
         console.error('Supabase load error',res.error);
         updateSyncStatus('error');
         showToast('⚠️ Cloud load failed — working offline','warn');
         return;
       }
+      var localOwner=null; try{localOwner=localStorage.getItem(SB_OWNER_KEY);}catch(e){}
+      // FIX (privacy/data-leak): this browser's local copy belongs to a DIFFERENT account.
+      // Wipe it and reload so account B never inherits (or uploads) account A's data.
+      if(localOwner && localOwner!==uid){
+        try{ localStorage.removeItem(APP_KEY); localStorage.setItem(SB_OWNER_KEY,uid); }catch(e){}
+        location.reload(); return;
+      }
       if(res.data && res.data.data){
+        // Local, never-synced work that the cloud copy is about to replace → keep a safety backup.
+        try{
+          if(!localOwner && state.folders && state.folders.length){
+            localStorage.setItem('medtrack_backup_before_first_sync',JSON.stringify(state));
+          }
+        }catch(e){}
         applyRemoteState(res.data.data);
       } else {
-        // First sign-in on this account: push current local state up as the seed.
-        saveToSupabase();
+        _sbDirty=true;   // brand-new account: seed the cloud with this browser's data
       }
-      updateSyncStatus('synced');
-    });
+      try{localStorage.setItem(SB_OWNER_KEY,uid);}catch(e){}
+      _sbLoaded=true;
+      if(_sbDirty) saveToSupabase(); else updateSyncStatus('synced');
+    }).catch(function(e){ console.error('Supabase load exception',e); updateSyncStatus('error'); });
 }
 
 function subscribeRealtime(){
   if(!supabaseClient||!currentUser) return;
   if(realtimeChannel){ try{supabaseClient.removeChannel(realtimeChannel);}catch(e){} }
-  realtimeChannel = supabaseClient.channel('medtrack_state_'+currentUser.id)
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'medtrack_state',filter:'user_id=eq.'+currentUser.id},function(payload){
-      if(payload.new && payload.new.data) applyRemoteState(payload.new.data);
-      updateSyncStatus('synced');
+  var uid=currentUser.id;
+  // FIX: listen to '*' (INSERT too — a second device may create the row first).
+  realtimeChannel = supabaseClient.channel('medtrack_state_'+uid)
+    .on('postgres_changes',{event:'*',schema:'public',table:SB_TABLE,filter:'user_id=eq.'+uid},function(payload){
+      var rec=payload.new; if(!rec) return;
+      // FIX #1 (data-loss bug): every save echoes back to the SAME tab. The old code re-applied that
+      // echo, which silently reverted anything typed during the 1.5s debounce window and re-rendered
+      // the UI under the user's cursor. We now ignore our own writes.
+      if(rec.data && rec.data._sync && rec.data._sync.client===SB_CLIENT_ID) return;
+      // Never clobber edits that haven't been uploaded yet.
+      if(_sbDirty || supabaseSaveTimeout){ _sbConflictPending=true; return; }
+      if(rec.data){ applyRemoteState(rec.data); updateSyncStatus('synced'); }
+      else { loadRemoteState(); }   // FIX: Realtime omits oversized rows (>~1MB) — fall back to a normal fetch
     })
     .subscribe(function(status){
+      if(status==='SUBSCRIBED') return;
       if(status==='CHANNEL_ERROR'||status==='TIMED_OUT') updateSyncStatus('error');
     });
 }
+var _sbConflictPending=false;
 
 function saveToSupabase(){
-  if(!currentUser||!supabaseClient) return;
-  supabaseClient.from('medtrack_state').upsert({user_id:currentUser.id,data:state},{onConflict:'user_id'})
+  if(!currentUser||!supabaseClient) return Promise.resolve();
+  if(!_sbLoaded) return Promise.resolve();       // never upload before the first cloud load finished
+  if(_sbSaving){ _sbDirty=true; return Promise.resolve(); }        // one request at a time; re-run when it finishes
+  _sbSaving=true; _sbDirty=false; supabaseSaveTimeout=null;
+  var payload={}; try{ payload=JSON.parse(JSON.stringify(state)); }catch(e){ payload=state; }
+  payload._sync={client:SB_CLIENT_ID, at:new Date().toISOString()};
+  return supabaseClient.from(SB_TABLE).upsert({user_id:currentUser.id,data:payload,updated_at:new Date().toISOString()},{onConflict:'user_id'})
     .then(function(res){
+      _sbSaving=false;
       if(res.error){
         console.error('Supabase save error',res.error);
+        _sbDirty=true;
         updateSyncStatus('error');
         showToast('❌ Cloud save failed — data saved locally','error');
-      } else {
-        updateSyncStatus('synced');
+        return;
       }
-    });
+      if(_sbDirty && !supabaseSaveTimeout){ supabaseSaveTimeout=setTimeout(saveToSupabase,800); updateSyncStatus('syncing'); return; }
+      updateSyncStatus('synced');
+      if(_sbConflictPending && !_sbDirty){ _sbConflictPending=false; loadRemoteState(); }
+    }).catch(function(e){ _sbSaving=false; _sbDirty=true; console.error('Supabase save exception',e); updateSyncStatus('error'); });
 }
+
+// Flush pending changes when the tab is hidden/closed, and retry when the connection returns.
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='hidden' && currentUser && (supabaseSaveTimeout||_sbDirty)){
+    clearTimeout(supabaseSaveTimeout); supabaseSaveTimeout=null; saveToSupabase();
+  }
+});
+window.addEventListener('pagehide',function(){
+  if(currentUser && (supabaseSaveTimeout||_sbDirty)){ clearTimeout(supabaseSaveTimeout); supabaseSaveTimeout=null; saveToSupabase(); }
+});
+window.addEventListener('online',function(){ if(currentUser){ _sbDirty=true; saveToSupabase(); } });
 
 function updateSyncStatus(s){
   var el=document.getElementById('sync-status'); if(!el) return;
@@ -3334,6 +3395,7 @@ function saveState(){
   // Skip re-pushing a write that only just arrived FROM the cloud (would
   // otherwise bounce state back and forth between tabs/devices forever).
   if(currentUser && !_applyingRemoteState){
+    _sbDirty=true;
     updateSyncStatus('syncing');
     clearTimeout(supabaseSaveTimeout);
     supabaseSaveTimeout=setTimeout(saveToSupabase,1500);
@@ -4046,7 +4108,7 @@ function renderSubfolderView(){
     '<span class="breadcrumb-item" onclick="showView(\'folders\')">📁 Root</span>'+
     crumbs.map(function(c,i){
       return '<span class="breadcrumb-sep">›</span>'+
-        '<span class="breadcrumb-item '+(i===crumbs.length-1?'active':'')+'" onclick="navigateToFolder(\''+c.id+'\')">'+(c.icon||'📂')+' '+c.name+'</span>';
+        '<span class="breadcrumb-item '+(i===crumbs.length-1?'active':'')+'" onclick="navigateToFolder(\''+c.id+'\')">'+(c.icon||'📂')+' '+esc(c.name)+'</span>';
     }).join('')+
     '<span style="margin-left:auto;display:flex;gap:4px">'+
       '<button class="icon-btn" onclick="openMoveFolder(\''+folder.id+'\')" title="Move this folder" style="font-size:12px;padding:3px 8px">📦 Move</button>'+
@@ -4238,9 +4300,15 @@ function toggleStage(topicId,stageKey){
 
   if(r.topic.stages[stageKey]){
     // ANY stage tick → update heatmap + streak (fix: was only on mastered)
-    trackWeeklyStudied(topicId);
-    state.heatmap[today]=(state.heatmap[today]||0)+1;
-    updateStreak();
+    // FIX: un-ticking and re-ticking a stage used to add +1 heatmap activity and (for 'mastered')
+    // advance the SM-2 ladder again every time. Count each stage at most once per day.
+    var _tk=r.topic._ticked=r.topic._ticked||{};
+    var _firstToday=(_tk[stageKey]!==today); _tk[stageKey]=today;
+    if(_firstToday){
+      trackWeeklyStudied(topicId);
+      state.heatmap[today]=(state.heatmap[today]||0)+1;
+      updateStreak();
+    }
 
     // Auto-enroll in revision cycle when any stage is first ticked
     // Uses our predefined SM-2 schedule: 1→3→7→14→30→60→90→180 days
@@ -4254,7 +4322,7 @@ function toggleStage(topicId,stageKey){
     }
 
     // If mastered stage ticked: apply full SM-2 progression
-    if(stageKey==='mastered'){
+    if(stageKey==='mastered' && _firstToday){
       autoSpacedRepetition(r.topic, true); // skipHeatmap — already counted above
       showToast('🏆 Mastered! Next review in '+r.topic.interval+'d','success');
     }
@@ -4532,7 +4600,7 @@ function showDuplicateWarning(dupes,name){
     var sevColor=pct>=90?'var(--red)':pct>=75?'var(--yellow)':'var(--text-muted)';
     return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-sm);margin-bottom:6px;cursor:pointer" onclick="goToTopic(\''+m.topic.id+'\')">'+
       '<span style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:'+sevColor+';min-width:38px">'+pct+'%</span>'+
-      '<div style="flex:1"><div style="font-size:13px;font-weight:600">'+m.topic.name+'</div><div style="font-size:11px;color:var(--text-muted)">'+(m.folder.icon||'📂')+' '+m.folder.name+' · '+getTopicCompletion(m.topic)+'% complete'+(m.topic.repetitions?' · Step '+m.topic.repetitions:'')+'</div></div>'+
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">'+esc(m.topic.name)+'</div><div style="font-size:11px;color:var(--text-muted)">'+(m.folder.icon||'📂')+' '+esc(m.folder.name)+' · '+getTopicCompletion(m.topic)+'% complete'+(m.topic.repetitions?' · Step '+m.topic.repetitions:'')+'</div></div>'+
       '<span style="font-size:11px;color:var(--primary)">View →</span>'+
     '</div>';
   }).join('');
@@ -5643,7 +5711,7 @@ function renderModFolderView(mid){
   var crumbs=[],cur=folder;
   while(cur){crumbs.unshift(cur);cur=cur.parentId?modFindFolder(mid,cur.parentId):null;}
   var bc='<span class="breadcrumb-item" onclick="_curModFolderId=null;renderModuleView(\''+mid+'\')">'+def.icon+' '+MODULE_DEFS[mid].label+'</span>'+
-    crumbs.map(function(c,i){return '<span class="breadcrumb-sep">›</span><span class="breadcrumb-item '+(i===crumbs.length-1?'active':'')+'" onclick="modNavigate(\''+mid+'\',\''+c.id+'\')">'+c.name+'</span>';}).join('');
+    crumbs.map(function(c,i){return '<span class="breadcrumb-sep">›</span><span class="breadcrumb-item '+(i===crumbs.length-1?'active':'')+'" onclick="modNavigate(\''+mid+'\',\''+c.id+'\')">'+esc(c.name)+'</span>';}).join('');
 
   root.innerHTML=
     '<div class="view-header" style="margin-bottom:12px">'+
@@ -6182,7 +6250,7 @@ function openAuthModal(){
 function closeAuthModal(){var o=document.getElementById('auth-overlay');if(o)o.classList.remove('show');}
 function signInWithGoogle(){
   if(!supabaseClient){showToast(isSupabaseConfigured()?'Still connecting…try again in a moment':'Cloud sync not configured — see README.md','warn');return;}
-  supabaseClient.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}}).then(function(res){
+  supabaseClient.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname}}).then(function(res){
     if(res.error) showToast('Sign-in error: '+res.error.message,'error');
     // On success the browser navigates away to Google, then back — no further code runs here.
   });
@@ -6193,7 +6261,7 @@ function signInWithMagicLink(){
   var email=input?input.value.trim():'';
   if(!email||email.indexOf('@')===-1){showToast('Enter a valid email first','warn');return;}
   var btn=document.getElementById('auth-magic-btn'); if(btn){btn.disabled=true;btn.textContent='Sending…';}
-  supabaseClient.auth.signInWithOtp({email:email,options:{emailRedirectTo:window.location.href}}).then(function(res){
+  supabaseClient.auth.signInWithOtp({email:email,options:{emailRedirectTo:window.location.origin+window.location.pathname}}).then(function(res){
     if(btn){btn.disabled=false;btn.textContent='✉️ Email me a sign-in link';}
     if(res.error){showToast('Error: '+res.error.message,'error');}
     else{showToast('✅ Check your inbox for the sign-in link!','success');}
@@ -6201,7 +6269,18 @@ function signInWithMagicLink(){
 }
 function signOutUser(){
   if(!supabaseClient)return;
-  supabaseClient.auth.signOut().then(function(){currentUser=null;updateNavAuth(null);updateSyncStatus('offline');closeAuthModal();showToast('Signed out. Data saved locally.','info');}).catch(function(e){showToast('Sign-out error: '+e.message,'error');});
+  var _pending=(supabaseSaveTimeout||_sbDirty); clearTimeout(supabaseSaveTimeout); supabaseSaveTimeout=null;
+  Promise.resolve(_pending?saveToSupabase():null).catch(function(){}).then(function(){
+    if(_pending && _sbDirty && !confirm('Your latest changes could not be uploaded to the cloud. Sign out and DISCARD them?')) return 'cancel';
+    return supabaseClient.auth.signOut();
+  }).then(function(r){
+    if(r==='cancel') return;
+    // FIX: clear the local copy so the NEXT person to sign in on this browser can't inherit (or upload) this account's data.
+    try{ localStorage.removeItem(APP_KEY); localStorage.removeItem(SB_OWNER_KEY); }catch(e){}
+    currentUser=null;_sbLastUserId=null;_sbLoaded=false;updateNavAuth(null);updateSyncStatus('offline');closeAuthModal();
+    showToast('Signed out. Local copy cleared — reloading…','info');
+    setTimeout(function(){ location.reload(); },700);
+  }).catch(function(e){showToast('Sign-out error: '+e.message,'error');});
 }
 function updateNavAuth(user){
   var signinBtn=document.getElementById('nav-signin-btn'),chip=document.getElementById('nav-user-chip'),avatar=document.getElementById('nav-user-avatar'),nameEl=document.getElementById('nav-user-name');
