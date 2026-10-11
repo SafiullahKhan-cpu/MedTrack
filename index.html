@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MedTrack Pro v5 — Medical Command Center</title>
+<title>MedTrack Pro v6 — Medical Command Center</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -11,7 +11,7 @@
 
 <style>
 /* ===================================================
-   MEDTRACK PRO v5 — DESIGN SYSTEM
+   MEDTRACK PRO v6 — DESIGN SYSTEM
 =================================================== */
 :root {
   --bg: #060C18;
@@ -2072,6 +2072,70 @@ input, select, textarea { min-width: 0; }
 .brief-chip > div { min-width: 0; }
 .diary-quote-author { flex-shrink: 1; overflow-wrap: anywhere; }
 
+
+/* ===== AI connection / OCR ===== */
+.settings-modal { max-width: min(560px, 100%); }
+.ai-field { margin-bottom: 10px; }
+.ai-field label, .ocr-lbl { display: block; font-size: 0.6875rem; color: var(--text-muted); margin-bottom: 4px; }
+.ai-key-row { display: flex; gap: 6px; align-items: center; }
+.ai-key-row .form-input { flex: 1 1 auto; min-width: 0; }
+.ai-hint { font-size: 0.6875rem; color: var(--text-muted); line-height: 1.5; }
+.ai-btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.ai-status { font-size: 0.75rem; line-height: 1.5; margin: 6px 0 10px; color: var(--text-muted); overflow-wrap: anywhere; }
+.ai-status.ok { color: var(--green); } .ai-status.err { color: var(--red); } .ai-status.warn { color: var(--yellow); }
+.ai-status .warn { color: var(--yellow); }
+.ai-status code, .ai-conn-bar code { font-family: var(--font-mono); font-size: 0.6875rem; background: var(--surface2); padding: 1px 5px; border-radius: 4px; }
+#ai-model-select { height: auto; margin-top: 6px; font-size: 0.75rem; }
+.ocr-box { background: var(--blue-dim); border: 1px solid rgba(58,134,255,0.3); border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 12px; }
+.ocr-drop { border: 2px dashed var(--border); border-radius: var(--r-sm); padding: 14px; text-align: center; cursor: pointer; display: flex; flex-direction: column; gap: 2px; font-size: 0.75rem; transition: all .2s; }
+.ocr-drop span { font-size: 0.6875rem; color: var(--text-muted); }
+.ocr-drop:hover, .ocr-drop.drag, .ocr-drop:focus-visible { border-color: var(--blue); background: var(--blue-dim); }
+.ocr-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.ocr-thumb { position: relative; width: 84px; height: 84px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.ocr-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ocr-thumb button { position: absolute; top: 2px; right: 2px; width: 24px; height: 24px; border-radius: 50%; border: none; background: rgba(0,0,0,.7); color: #fff; cursor: pointer; font-size: 0.6875rem; }
+.ocr-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
+.ocr-check { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; margin: 6px 0; cursor: pointer; }
+.ocr-check input { width: 18px; height: 18px; }
+.ai-conn-bar { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 0.75rem; padding: 6px 4px 8px; color: var(--text-muted); }
+.ai-conn-bar a { color: var(--primary); }
+.ai-msg-body ul { margin: 6px 0 6px 18px; } .ai-msg-body pre { white-space: pre-wrap; background: var(--surface2); padding: 8px; border-radius: 6px; overflow-x: auto; }
+.ai-msg-body code { font-family: var(--font-mono); font-size: 0.8em; background: var(--surface2); padding: 1px 4px; border-radius: 4px; }
+
+
+/* ===== Important links + quick-check timer ===== */
+.ql-card .reminders-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.ql-timer { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--text-muted); }
+.ql-timer select { background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px; font-size: 0.75rem; }
+.ql-note { font-size: 0.6875rem; color: var(--text-muted); margin: 6px 0 10px; line-height: 1.5; }
+.ql-item { display: flex; gap: 4px; align-items: stretch; margin-bottom: 6px; }
+.ql-open { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; text-align: left; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 8px 10px; cursor: pointer; font-family: var(--font-body); transition: all .2s; }
+.ql-open:hover { border-color: var(--primary); background: var(--primary-dim); }
+.ql-ic { font-size: 1.25rem; flex: 0 0 auto; }
+.ql-txt { display: flex; flex-direction: column; min-width: 0; font-size: 0.8125rem; }
+.ql-txt b, .ql-txt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ql-txt small { color: var(--text-muted); font-size: 0.6875rem; }
+.ql-mini { flex: 0 0 auto; width: 34px; background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); border-radius: var(--r-sm); cursor: pointer; font-size: 0.8125rem; }
+.ql-mini:hover { color: var(--text); border-color: var(--text-muted); }
+.ql-empty { font-size: 0.75rem; color: var(--text-muted); text-align: center; padding: 8px 4px 12px; line-height: 1.5; }
+.ql-form { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.ql-form-btns { display: flex; gap: 6px; }
+.ql-auto { font-size: 0.6875rem; color: var(--text-muted); margin: 8px 0 0; }
+.ql-today { font-size: 0.6875rem; color: var(--text-muted); margin-top: 8px; }
+#qc-chip { display: none; position: fixed; z-index: 2500; right: max(12px, env(safe-area-inset-right)); bottom: calc(14px + env(safe-area-inset-bottom)); align-items: center; gap: 10px; flex-wrap: wrap; max-width: calc(100vw - 24px);
+  background: var(--surface); border: 1px solid var(--primary); border-radius: 14px; padding: 10px 12px; box-shadow: 0 10px 34px rgba(0,0,0,.5); }
+#qc-chip.show { display: flex; }
+#qc-chip.late { border-color: var(--red); animation: qcPulse 1s ease-in-out infinite; }
+.qc-ic { font-size: 1.25rem; } .qc-label { font-size: 0.75rem; color: var(--text-muted); } .qc-time { font-family: var(--font-mono); font-weight: 700; font-size: 1.125rem; }
+#qc-chip button { background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: var(--r-sm); min-height: 40px; padding: 4px 12px; cursor: pointer; font-size: 0.8125rem; }
+#qc-chip .qc-done { background: var(--primary); color: var(--bg); border-color: var(--primary); font-weight: 700; }
+@keyframes qcPulse { 50% { box-shadow: 0 0 0 6px rgba(255,71,87,.25); } }
+@media (max-width: 768px) { #qc-chip { bottom: calc(74px + env(safe-area-inset-bottom)); left: 12px; right: 12px; } }
+
+
+.home-grid { align-items: start; }
+.ai-hint a, .ai-status a, .ql-note a { color: var(--primary); text-decoration: underline; }
+
 /* Display & accessibility popover */
 #a11y-panel { display: none; position: fixed; z-index: 3000; right: max(10px, env(safe-area-inset-right)); top: calc(var(--nav-h) + 6px);
   width: min(340px, calc(100vw - 20px)); max-height: calc(100dvh - var(--nav-h) - 20px); overflow-y: auto;
@@ -2196,6 +2260,21 @@ input, select, textarea { min-width: 0; }
           <input class="mini-input" id="reminder-input" placeholder="Add reminder..." onkeydown="if(event.key==='Enter')addReminder()">
           <button class="btn btn-primary btn-sm" onclick="addReminder()">+</button>
         </div>
+      </div>
+      <div class="reminders-card ql-card" id="quick-links-card">
+        <div class="reminders-header"><div class="section-title" style="margin-bottom:0">🔗 Important Links</div>
+          <label class="ql-timer" title="How long a quick check may last before the tab is closed for you"><span>⏱</span>
+            <select id="ql-minutes" onchange="qlSetMinutes(this.value)" aria-label="Quick check length in minutes">
+              <option value="1">1 min</option><option value="2">2 min</option><option value="3">3 min</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option></select></label></div>
+        <div class="ql-note">Open a link for a <b>timed quick check</b> — the tab is closed for you when time is up, so you don’t get lost in the feed.</div>
+        <div id="quick-links-list"></div>
+        <div class="ql-form">
+          <input class="mini-input" id="ql-label" placeholder="Name (optional)" aria-label="Link name" onkeydown="if(event.key==='Enter')qlSave()">
+          <input class="mini-input" id="ql-url" placeholder="Paste link — e.g. facebook.com/groups/…" aria-label="Link address" inputmode="url" autocapitalize="off" onkeydown="if(event.key==='Enter')qlSave()">
+          <div class="ql-form-btns"><button class="btn btn-primary btn-sm" id="ql-save-btn" onclick="qlSave()">+ Add</button><button class="btn btn-secondary btn-sm" id="ql-cancel-btn" onclick="qlCancelEdit()" style="display:none">Cancel</button></div>
+        </div>
+        <label class="ocr-check ql-auto"><input type="checkbox" id="ql-autoclose" onchange="qlSetAutoClose(this.checked)"> Close the tab for me when time is up</label>
+        <div class="ql-today" id="ql-today"></div>
       </div>
     </div>
   </div>
@@ -2931,10 +3010,42 @@ input, select, textarea { min-width: 0; }
       <span style="font-size:1.25rem;flex-shrink:0">🤖</span>
       <div style="flex:1">
         <div style="font-size:0.75rem;font-weight:600;color:var(--primary);margin-bottom:4px">Step 1 — Generate your schedule</div>
-        <div style="font-size:0.6875rem;color:var(--text-muted);margin-bottom:8px">This prompt already contains your full folder/topic structure, due & weak topics, streak and exam countdown — the AI reuses what exists instead of you re-typing it. Copy → paste into Claude/ChatGPT → paste the JSON it gives back below.</div>
+        <div style="font-size:0.6875rem;color:var(--text-muted);margin-bottom:8px">This prompt already contains your full folder/topic structure, due & weak topics, streak and exam countdown — the AI reuses what exists instead of you re-typing it. Press <b>Generate with my AI</b> to have your connected API build a hand-picked, concept-by-concept plan right here — or Copy → paste into Claude/ChatGPT → paste the JSON it gives back below.</div>
         <label style="font-size:0.625rem;color:var(--text-muted);display:block;margin-bottom:3px">Optional — one-off context for today only (e.g. "only 3 hours available, exam-hall visit this evening")</label>
         <input class="form-input" id="sched-extra-context" placeholder="Leave blank if nothing unusual today" style="margin-bottom:8px;font-size:0.75rem">
-        <button class="btn btn-secondary btn-sm" onclick="copySchedulePrompt()" id="sched-prompt-copy-btn">📋 Copy AI Prompt</button>
+        <div class="ai-btn-row" style="margin-top:0">
+          <button class="btn btn-primary btn-sm" onclick="schedAiGenerate()" id="sched-gen-btn">✨ Generate with my AI</button>
+          <button class="btn btn-secondary btn-sm" onclick="copySchedulePrompt()" id="sched-prompt-copy-btn">📋 Copy AI Prompt</button>
+        </div>
+        <div class="ai-status" id="sched-gen-status" role="status" aria-live="polite"></div>
+        <div class="ai-hint" id="sched-gen-note"></div>
+      </div>
+    </div>
+
+    <!-- OCR: scan a timetable photo with the user's AI -->
+    <div class="ocr-box">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:1.25rem;flex-shrink:0">📷</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:0.75rem;font-weight:600;color:var(--blue);margin-bottom:4px">Or scan a timetable photo <span class="di-badge">Optional · uses your AI API</span></div>
+          <div style="font-size:0.6875rem;color:var(--text-muted);margin-bottom:8px">Paste (Ctrl+V), drop or choose a photo/screenshot of your timetable. The AI reads it and fills the JSON below for you to review — nothing is loaded until you press “Load Schedule”.</div>
+          <div class="ocr-drop" id="sched-ocr-zone" tabindex="0" role="button" aria-label="Add timetable images"
+               onclick="document.getElementById('sched-ocr-file').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"
+               ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');schedOcrAddFiles(event.dataTransfer.files)">
+            <strong>📎 Click to choose · drag &amp; drop · or paste an image</strong><span>PNG / JPG / WEBP · up to 6 images</span>
+          </div>
+          <input type="file" id="sched-ocr-file" accept="image/*" multiple style="display:none" onchange="schedOcrAddFiles(this.files);this.value=''">
+          <div class="ocr-thumbs" id="sched-ocr-thumbs"></div>
+          <div class="ocr-row">
+            <div style="flex:0 0 auto"><label for="sched-ocr-date" class="ocr-lbl">Timetable is for date</label><input class="form-input" type="date" id="sched-ocr-date" style="font-size:0.75rem"></div>
+            <div style="flex:1 1 220px;min-width:0"><label for="sched-ocr-notes" class="ocr-lbl">Important things the AI must know (optional)</label>
+              <textarea class="form-input" id="sched-ocr-notes" rows="2" style="font-size:0.75rem" placeholder="e.g. Friday prayer 1–2 pm · anatomy lab is compulsory · I want to sleep by 11 · exam in 3 weeks"></textarea></div>
+          </div>
+          <label class="ocr-check"><input type="checkbox" id="sched-ocr-fill"> Also fill my free gaps with revision of my due &amp; weak topics</label>
+          <div class="ai-btn-row"><button type="button" class="btn btn-primary btn-sm" id="sched-ocr-run" onclick="schedOcrRun()" disabled>✨ Extract schedule with AI</button></div>
+          <div class="ai-status" id="sched-ocr-status" role="status" aria-live="polite"></div>
+          <div class="ai-hint" id="sched-ocr-conn"></div>
+        </div>
       </div>
     </div>
 
@@ -3169,6 +3280,34 @@ input, select, textarea { min-width: 0; }
     </div>
     <div id="settings-exam-countdown" style="font-size:0.75rem;color:var(--primary);margin-bottom:16px"></div>
 
+    <div class="settings-section-title">🤖 AI Assistant — connect your own API</div>
+    <div style="font-size:0.6875rem;color:var(--text-muted);margin-bottom:10px">
+      Add an API key you already have. MedTrack fetches every model available to your key, you pick one, and it is saved to your account so you never re-enter it. The AI coach then sees your live progress, and Schedule import can read timetable photos.
+    </div>
+    <div id="ai-settings">
+      <div class="ai-field"><label for="ai-provider">Provider</label>
+        <select class="form-input" id="ai-provider" onchange="aiOnProviderChange()"></select></div>
+      <div class="ai-field" id="ai-base-wrap" style="display:none"><label for="ai-base">Base URL</label>
+        <input class="form-input" id="ai-base" placeholder="https://api.groq.com/openai/v1" autocomplete="off" spellcheck="false"></div>
+      <div class="ai-field"><label for="ai-key">API key</label>
+        <div class="ai-key-row"><input class="form-input" id="ai-key" type="password" placeholder="Paste your API key" autocomplete="off" spellcheck="false" oninput="aiOnKeyInput()">
+          <button type="button" class="btn btn-secondary btn-sm" id="ai-key-toggle" onclick="aiToggleKey()" aria-pressed="false">👁 Show</button></div>
+        <div class="ai-hint" id="ai-key-hint"></div></div>
+      <div class="ai-btn-row"><button type="button" class="btn btn-primary btn-sm" id="ai-connect-btn" onclick="aiConnect()">🔌 Connect &amp; fetch models</button></div>
+      <div class="ai-status" id="ai-status" role="status" aria-live="polite"></div>
+      <div id="ai-model-wrap" style="display:none">
+        <div class="ai-field"><label for="ai-model-search">Choose a model <span id="ai-model-count" class="ai-hint"></span></label>
+          <input class="form-input" id="ai-model-search" placeholder="Filter models… (👁 = can read images)" oninput="aiRenderModels(this.value)" autocomplete="off">
+          <select class="form-input" id="ai-model-select" size="6" aria-label="Available models"></select></div>
+        <div class="ai-btn-row">
+          <button type="button" class="btn btn-primary btn-sm" id="ai-save-btn" onclick="aiSaveSettings()">💾 Save</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="ai-test-btn" onclick="aiTest()">🧪 Test</button>
+        </div>
+      </div>
+      <div class="ai-btn-row"><button type="button" class="btn btn-danger btn-sm" id="ai-remove-btn" onclick="aiRemoveKey()" style="display:none">🗑️ Remove saved key</button></div>
+      <div class="ai-hint" style="margin-top:8px">🔒 Your key is stored only in <b>your own</b> private row in your Supabase project (visible to nobody else) and used straight from this browser to your provider. It is never part of backups or exports. Tip: create a key with a low spending limit just for this app.<br>⚠️ The AI coach sends your study progress (topic names, scores, diary notes) to the provider you choose.</div>
+    </div>
+
     <div class="settings-section-title">💾 Local Data & Backup</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-secondary btn-sm" onclick="exportBackup();closeSettingsPanel()">💾 Export Backup</button>
@@ -3254,6 +3393,7 @@ function handleAuthSession(session,event){
     currentUser=session.user; updateNavAuth(currentUser); updateSyncStatus('loading');
     loadRemoteState();
     subscribeRealtime();
+    try{ aiLoadCloud(); }catch(e){}
   } else {
     currentUser=null; _sbLoaded=false; updateNavAuth(null);
     if(realtimeChannel){ try{supabaseClient.removeChannel(realtimeChannel);}catch(e){} realtimeChannel=null; }
@@ -3297,7 +3437,7 @@ function loadRemoteState(){
       // FIX (privacy/data-leak): this browser's local copy belongs to a DIFFERENT account.
       // Wipe it and reload so account B never inherits (or uploads) account A's data.
       if(localOwner && localOwner!==uid){
-        try{ localStorage.removeItem(APP_KEY); localStorage.setItem(SB_OWNER_KEY,uid); }catch(e){}
+        try{ localStorage.removeItem(APP_KEY); localStorage.removeItem('medtrack_ai_cfg'); localStorage.setItem(SB_OWNER_KEY,uid); }catch(e){}
         location.reload(); return;
       }
       if(res.data && res.data.data){
@@ -6395,7 +6535,7 @@ function signOutUser(){
   }).then(function(r){
     if(r==='cancel') return;
     // FIX: clear the local copy so the NEXT person to sign in on this browser can't inherit (or upload) this account's data.
-    try{ localStorage.removeItem(APP_KEY); localStorage.removeItem(SB_OWNER_KEY); }catch(e){}
+    try{ localStorage.removeItem(APP_KEY); localStorage.removeItem(SB_OWNER_KEY); localStorage.removeItem('medtrack_ai_cfg'); }catch(e){}
     currentUser=null;_sbLastUserId=null;_sbLoaded=false;updateNavAuth(null);updateSyncStatus('offline');closeAuthModal();
     showToast('Signed out. Local copy cleared — reloading…','info');
     setTimeout(function(){ location.reload(); },700);
@@ -7171,36 +7311,7 @@ var v4AiMsgs=[];
 function v4OpenAi(){document.getElementById('v4-ai-overlay').classList.add('show');}
 function v4CloseAi(){document.getElementById('v4-ai-overlay').classList.remove('show');}
 function v4AiQuick(msg){var inp=document.getElementById('v4-ai-input');if(inp)inp.value=msg;v4SendAi();}
-async function v4SendAi(){
-  var inp=document.getElementById('v4-ai-input');if(!inp)return;
-  var msg=inp.value.trim();if(!msg)return;inp.value='';
-  var btn=document.getElementById('v4-ai-send');if(btn){btn.disabled=true;btn.textContent='...';}
-  syncStreakDecay();
-  var allT=getAllTopics();var due=getDueTopics();var weak=allT.filter(function(x){return x.topic.weakFlag;});
-  var ctx='User has '+allT.length+' topics, '+due.length+' due today, '+weak.length+' weak topics. Streak: '+state.streak.current+' days.';
-  if(weak.length)ctx+='\nWeak: '+weak.slice(0,5).map(function(x){return x.topic.name;}).join(', ');
-  v4AiMsgs.push({role:'user',content:msg});
-  v4AppendAiMsg('u','👤 You',msg);
-  var chat=document.getElementById('v4-ai-chat');
-  var loadEl=document.createElement('div');loadEl.className='ai-msg';
-  loadEl.innerHTML='<div class="ai-msg-role a">🧠 MedTrack AI</div><div class="ai-msg-body">⏳ Thinking...</div>';
-  if(chat){chat.appendChild(loadEl);chat.scrollTop=chat.scrollHeight;}
-  try{
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',max_tokens:1000,
-      system:'You are MedTrack AI, an intelligent medical study assistant. Context: '+ctx+'\n\nBe concise, clinically accurate, and encouraging.',
-      messages:v4AiMsgs.map(function(m){return{role:m.role,content:m.content};})
-    })});
-    var data=await resp.json();
-    var text=data.content&&data.content[0]?data.content[0].text:'No response.';
-    v4AiMsgs.push({role:'assistant',content:text});
-    var bodyEl=loadEl.querySelector('.ai-msg-body');
-    bodyEl.textContent='';
-    var words=text.split(' ');var wi=0;
-    var iv=setInterval(function(){if(wi>=words.length){clearInterval(iv);return;}bodyEl.textContent+=(wi>0?' ':'')+words[wi++];if(chat)chat.scrollTop=chat.scrollHeight;},15);
-  }catch(e){loadEl.querySelector('.ai-msg-body').textContent='Connection error. Please try again.';}
-  if(btn){btn.disabled=false;btn.textContent='Send';}
-}
+async function v4SendAi(){ return aiChatSend(); }
 function v4AppendAiMsg(roleClass,roleName,text){
   var chat=document.getElementById('v4-ai-chat');if(!chat)return;
   var el=document.createElement('div');el.className='ai-msg';
@@ -9219,7 +9330,11 @@ window.addEventListener('DOMContentLoaded',function(){
       <div class="ai-modal-title">MedTrack AI Assistant</div>
       <button class="modal-close" onclick="v4CloseAi()">✕</button>
     </div>
+    <div class="ai-conn-bar"><span id="v4-ai-status"></span>
+      <span><a href="#" onclick="v4CloseAi();openSettingsPanel();return false">⚙️ Change</a> · <a href="#" onclick="aiClearChat();return false">🧹 New chat</a></span></div>
     <div class="ai-quick-btns">
+      <button class="ai-qbtn" onclick="v4AiQuick(&quot;Review ALL my progress and give me a prioritised plan to excel: what to fix first, what to keep, and a realistic weekly rhythm.&quot;)">🚀 Plan to Excel</button>
+      <button class="ai-qbtn" onclick="v4AiQuick(&quot;Give me a weakness report: my weakest subjects and topics, why they are risky, and exactly how to fix each.&quot;)">🎯 Weakness Report</button>
       <button class="ai-qbtn" onclick="v4AiQuick(&quot;What are the most important topics I should revise today?&quot;)">📊 Today's Focus</button>
       <button class="ai-qbtn" onclick="v4AiQuick(&quot;Give me a 5-question viva drill on my weak topics&quot;)">🩺 Viva Drill</button>
       <button class="ai-qbtn" onclick="v4AiQuick(&quot;Create a mnemonic for my hardest topic&quot;)">🧠 Mnemonic</button>
@@ -9263,6 +9378,8 @@ window.addEventListener('DOMContentLoaded',function(){
 </div>
 
 
+<div id="qc-chip" role="status" aria-live="polite"><span class="qc-ic">⏱</span><div class="qc-main"><div id="qc-label" class="qc-label"></div><div id="qc-time" class="qc-time"></div></div>
+  <button type="button" onclick="qcExtend()">+2 min</button><button type="button" class="qc-done" onclick="qcDone()">Done · close tab</button></div>
 <!-- Display & accessibility panel -->
 <div id="a11y-panel" role="dialog" aria-label="Display and accessibility">
   <h3>👁 Display &amp; Accessibility</h3>
@@ -9316,6 +9433,628 @@ function syncNavHeight(){var n=document.getElementById('topnav');if(n)document.d
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
+</script>
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  AI CONNECTION — bring-your-own API key (Gemini / OpenAI / Anthropic / OpenRouter / custom)
+//  • Key + chosen model are saved to the user's own Supabase row (medtrack_ai_config, RLS-protected)
+//    so they never have to re-enter it, and cached locally for offline use.
+//  • Used by: the AI Assistant chat (with the student's full live progress) and the optional
+//    "scan a timetable photo" OCR in Schedule import.
+//  • The key is NEVER placed in `state` (so it is not in backups/exports or the realtime state sync).
+// ═══════════════════════════════════════════════════════════════════════════
+var AI_LS_KEY='medtrack_ai_cfg', AI_TABLE='medtrack_ai_config';
+var AI_PROVIDERS={
+  gemini:    {label:'Google Gemini',            base:'https://generativelanguage.googleapis.com/v1beta', hint:'Key starts with AIza…  (aistudio.google.com/apikey)'},
+  openai:    {label:'OpenAI',                   base:'https://api.openai.com/v1',                        hint:'Key starts with sk-…  (platform.openai.com/api-keys)'},
+  anthropic: {label:'Anthropic Claude',         base:'https://api.anthropic.com/v1',                     hint:'Key starts with sk-ant-…  (console.anthropic.com)'},
+  openrouter:{label:'OpenRouter (many models)', base:'https://openrouter.ai/api/v1',                     hint:'Key starts with sk-or-…  (openrouter.ai/keys)'},
+  custom:    {label:'Other (OpenAI-compatible)',base:'',                                                 hint:'Groq, DeepSeek, Mistral, Together, local server… enter its base URL (ending in /v1)'}
+};
+var aiCfg={provider:'gemini',key:'',model:'',base:'',owner:null};   // the SAVED connection
+var aiModelList=[];                                                    // last fetched models (memory only)
+var aiChatBusy=false, aiTableMissing=false;
+
+function aiIsReady(){return !!(aiCfg.key&&aiCfg.model&&(aiCfg.provider!=='custom'||aiCfg.base));}
+function aiBaseUrl(cfg){cfg=cfg||aiCfg;return String((cfg.provider==='custom'?cfg.base:AI_PROVIDERS[cfg.provider].base)||'').replace(/\/+$/,'');}
+function aiProviderLabel(p){return (AI_PROVIDERS[p]||{}).label||p;}
+
+// ───────── persistence ─────────
+function aiLoadLocal(){
+  try{var o=JSON.parse(localStorage.getItem(AI_LS_KEY)||'null'); if(o&&o.key) aiCfg=Object.assign({provider:'gemini',key:'',model:'',base:'',owner:null},o);}catch(e){}
+}
+function aiSaveLocal(){try{localStorage.setItem(AI_LS_KEY,JSON.stringify(aiCfg));}catch(e){}}
+function aiClearLocal(){aiCfg={provider:'gemini',key:'',model:'',base:'',owner:null};try{localStorage.removeItem(AI_LS_KEY);}catch(e){}}
+function aiIsMissingTable(err){var m=((err&&(err.message||''))+' '+(err&&err.code||'')).toLowerCase();return m.indexOf('42p01')>=0||m.indexOf('pgrst205')>=0||m.indexOf('does not exist')>=0||m.indexOf('schema cache')>=0;}
+
+function aiSaveCloud(){
+  if(!supabaseClient||!currentUser) return Promise.resolve({ok:false,reason:'signed-out'});
+  var row={user_id:currentUser.id,provider:aiCfg.provider,api_key:aiCfg.key,model:aiCfg.model,base_url:aiCfg.base||null,updated_at:new Date().toISOString()};
+  return supabaseClient.from(AI_TABLE).upsert(row,{onConflict:'user_id'}).then(function(res){
+    if(res.error){aiTableMissing=aiIsMissingTable(res.error);return {ok:false,reason:aiTableMissing?'no-table':'error',error:res.error};}
+    aiCfg.owner=currentUser.id; aiSaveLocal(); return {ok:true};
+  }).catch(function(e){return {ok:false,reason:'error',error:e};});
+}
+function aiDeleteCloud(){
+  if(!supabaseClient||!currentUser) return Promise.resolve({ok:false});
+  return supabaseClient.from(AI_TABLE).delete().eq('user_id',currentUser.id).then(function(res){return {ok:!res.error,error:res.error};}).catch(function(e){return {ok:false,error:e};});
+}
+function aiLoadCloud(){
+  if(!supabaseClient||!currentUser) return Promise.resolve();
+  var uid=currentUser.id;
+  // a locally cached key that belongs to a DIFFERENT account must never leak into this one
+  if(aiCfg.owner && aiCfg.owner!==uid) aiClearLocal();
+  return supabaseClient.from(AI_TABLE).select('provider,api_key,model,base_url').eq('user_id',uid).maybeSingle().then(function(res){
+    if(!currentUser||currentUser.id!==uid) return;
+    if(res.error){aiTableMissing=aiIsMissingTable(res.error); if(!aiTableMissing) console.warn('AI config load failed',res.error.message); aiRefreshBadge(); return;}
+    aiTableMissing=false;
+    if(res.data && res.data.api_key){
+      aiCfg={provider:res.data.provider||'gemini',key:res.data.api_key,model:res.data.model||'',base:res.data.base_url||'',owner:uid};
+      aiSaveLocal();
+    } else if(aiCfg.key && !aiCfg.owner){
+      aiSaveCloud();            // first sign-in: upload the key that was only stored on this device
+    }
+    aiRefreshBadge(); aiSettingsRender();
+  }).catch(function(e){console.warn('AI config load exception',e&&e.message);});
+}
+
+// ───────── provider calls ─────────
+function aiErrText(status,body,fallback){
+  var msg=''; try{var j=JSON.parse(body);var e=j.error||j; msg=(e&&e.message)||(typeof e==='string'?e:'')||j.message||'';}catch(x){msg=String(body||'').slice(0,200);}
+  var pre='HTTP '+status+': ';
+  if(status===401||status===403) return pre+'the API key was rejected or lacks permission. '+(msg?'('+String(msg).slice(0,160)+')':'');
+  if(status===429) return pre+'rate limit / quota reached. '+(msg?'('+String(msg).slice(0,160)+')':'');
+  return pre+(msg?String(msg).slice(0,240):(fallback||'request failed'));
+}
+function aiNetErr(e){
+  if(e&&e.name==='AbortError') return new Error('The request timed out. Try again or pick a faster model.');
+  if(e instanceof TypeError) return new Error('Network error — you may be offline, or this provider blocks browser requests (CORS). Check your connection / base URL.');
+  return e;
+}
+function aiHeaders(cfg,extra){
+  var h={'Content-Type':'application/json'};
+  if(cfg.provider==='gemini') h['x-goog-api-key']=cfg.key;
+  else if(cfg.provider==='anthropic'){h['x-api-key']=cfg.key;h['anthropic-version']='2023-06-01';h['anthropic-dangerous-direct-browser-access']='true';}
+  else h['Authorization']='Bearer '+cfg.key;
+  return Object.assign(h,extra||{});
+}
+async function aiFetch(url,init,timeoutMs){
+  var ctrl=new AbortController(),tm=setTimeout(function(){ctrl.abort();},timeoutMs||30000);
+  try{
+    var res=await fetch(url,Object.assign({signal:ctrl.signal},init));
+    var text=await res.text();
+    if(!res.ok) throw new Error(aiErrText(res.status,text));
+    try{return JSON.parse(text);}catch(e){throw new Error('Unexpected (non-JSON) response from the provider.');}
+  }catch(e){throw aiNetErr(e);} finally{clearTimeout(tm);}
+}
+
+// Returns [{id,label,vision}] — vision: true / false / null(unknown)
+async function aiFetchModels(cfg){
+  var base=aiBaseUrl(cfg), out=[];
+  if(cfg.provider==='gemini'){
+    var tok='',guard=0;
+    do{
+      var j=await aiFetch(base+'/models?pageSize=200'+(tok?'&pageToken='+encodeURIComponent(tok):''),{headers:aiHeaders(cfg)});
+      (j.models||[]).forEach(function(m){
+        if((m.supportedGenerationMethods||[]).indexOf('generateContent')<0) return;
+        var id=String(m.name||'').replace(/^models\//,'');
+        if(/embedding|aqa|imagen|veo|tts|native-audio|live/i.test(id)) return;
+        out.push({id:id,label:(m.displayName||id)+'  ·  '+id,vision:true});
+      });
+      tok=j.nextPageToken||''; guard++;
+    }while(tok&&guard<6);
+    out.sort(function(a,b){return b.id.localeCompare(a.id,undefined,{numeric:true});});
+  } else if(cfg.provider==='anthropic'){
+    var ja=await aiFetch(base+'/models?limit=1000',{headers:aiHeaders(cfg)});
+    (ja.data||[]).forEach(function(m){out.push({id:m.id,label:(m.display_name||m.id)+'  ·  '+m.id,vision:true});});
+  } else if(cfg.provider==='openrouter'){
+    var jr=await aiFetch(base+'/models',{headers:aiHeaders(cfg)});
+    (jr.data||[]).forEach(function(m){
+      var mods=m.architecture&&m.architecture.input_modalities;
+      out.push({id:m.id,label:(m.name||m.id)+'  ·  '+m.id,vision:mods?mods.indexOf('image')>=0:null});
+    });
+    out.sort(function(a,b){return a.label.localeCompare(b.label);});
+  } else {
+    var jo=await aiFetch(base+'/models',{headers:aiHeaders(cfg)});
+    var arr=(jo.data||jo.models||[]).slice();
+    if(cfg.provider==='openai'){
+      arr=arr.filter(function(m){return /^(gpt-|chatgpt-|o\d)/.test(m.id)&&!/embedding|whisper|tts|dall-e|image|audio|moderation|realtime|transcribe|search-preview|computer-use|davinci|babbage/.test(m.id);});
+      arr.sort(function(a,b){return (b.created||0)-(a.created||0);});
+    }
+    arr.forEach(function(m){var id=m.id||m.name; if(id) out.push({id:id,label:id,vision:cfg.provider==='openai'?!/^gpt-3|instruct/.test(id):null});});
+  }
+  if(!out.length) throw new Error('Connected, but no usable chat models were returned for this key.');
+  return out;
+}
+
+// opts: {system, messages:[{role:'user'|'assistant', text, images?:[{mime,b64}]}], maxTokens, json, timeoutMs}
+async function aiGenerate(opts){
+  if(!aiIsReady()) throw new Error('No AI connection yet — add your API key in ⚙️ Settings → AI Assistant.');
+  var cfg=aiCfg, base=aiBaseUrl(cfg), msgs=opts.messages||[], maxT=opts.maxTokens||4096, to=opts.timeoutMs||120000, text='', j;
+  if(cfg.provider==='gemini'){
+    var body={contents:msgs.map(function(m){
+        var parts=[]; (m.images||[]).forEach(function(im){parts.push({inlineData:{mimeType:im.mime,data:im.b64}});}); parts.push({text:m.text||' '});
+        return {role:m.role==='assistant'?'model':'user',parts:parts};}),
+      generationConfig:{maxOutputTokens:Math.max(maxT,8192)}};
+    if(opts.system) body.systemInstruction={parts:[{text:opts.system}]};
+    if(opts.json) body.generationConfig.responseMimeType='application/json';
+    j=await aiFetch(base+'/models/'+encodeURIComponent(cfg.model)+':generateContent',{method:'POST',headers:aiHeaders(cfg),body:JSON.stringify(body)},to);
+    var cand=(j.candidates||[])[0];
+    if(!cand){var br=j.promptFeedback&&j.promptFeedback.blockReason; throw new Error(br?'The request was blocked by the provider ('+br+').':'The model returned no answer.');}
+    text=((cand.content&&cand.content.parts)||[]).map(function(p){return p.text||'';}).join('');
+    if(!text&&cand.finishReason==='MAX_TOKENS') throw new Error('The answer was cut off before it started. Try a different model.');
+  } else if(cfg.provider==='anthropic'){
+    var ab={model:cfg.model,max_tokens:maxT,messages:msgs.map(function(m){
+        var c=[]; (m.images||[]).forEach(function(im){c.push({type:'image',source:{type:'base64',media_type:im.mime,data:im.b64}});}); c.push({type:'text',text:m.text||' '});
+        return {role:m.role==='assistant'?'assistant':'user',content:c};})};
+    if(opts.system) ab.system=opts.system;
+    j=await aiFetch(base+'/messages',{method:'POST',headers:aiHeaders(cfg),body:JSON.stringify(ab)},to);
+    text=(j.content||[]).map(function(p){return p.type==='text'?p.text:'';}).join('');
+  } else { // openai / openrouter / custom  (chat-completions format)
+    var oa=[]; if(opts.system) oa.push({role:'system',content:opts.system});
+    msgs.forEach(function(m){
+      if(m.images&&m.images.length){
+        var c=[{type:'text',text:m.text||' '}]; m.images.forEach(function(im){c.push({type:'image_url',image_url:{url:'data:'+im.mime+';base64,'+im.b64}});});
+        oa.push({role:m.role,content:c});
+      } else oa.push({role:m.role,content:m.text||' '});
+    });
+    var ob={model:cfg.model,messages:oa};
+    ob[cfg.provider==='openai'?'max_completion_tokens':'max_tokens']=maxT;
+    if(opts.json&&cfg.provider==='openai') ob.response_format={type:'json_object'};
+    j=await aiFetch(base+'/chat/completions',{method:'POST',headers:aiHeaders(cfg),body:JSON.stringify(ob)},to);
+    var ch=(j.choices||[])[0]; text=ch&&ch.message?(typeof ch.message.content==='string'?ch.message.content:(ch.message.content||[]).map(function(p){return p.text||'';}).join('')):'';
+  }
+  text=String(text||'').trim();
+  if(!text) throw new Error('The model returned an empty answer. Try again or choose another model.');
+  return text;
+}
+
+// ───────── Settings UI ─────────
+function aiEl(id){return document.getElementById(id);}
+function aiStatus(html,cls){var s=aiEl('ai-status');if(!s)return;s.className='ai-status '+(cls||'');s.innerHTML=html;}
+function aiDraftCfg(){
+  var p=aiEl('ai-provider').value;
+  return {provider:p,key:(aiEl('ai-key').value||'').trim(),base:p==='custom'?(aiEl('ai-base').value||'').trim():'',model:aiEl('ai-model-select')?aiEl('ai-model-select').value:''};
+}
+function aiSettingsRender(){
+  var sel=aiEl('ai-provider'); if(!sel) return;
+  if(!sel.options.length){Object.keys(AI_PROVIDERS).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=AI_PROVIDERS[k].label;sel.appendChild(o);});}
+  sel.value=aiCfg.provider||'gemini';
+  aiEl('ai-key').value=aiCfg.key||''; aiEl('ai-base').value=aiCfg.base||'';
+  aiOnProviderChange(true);
+  if(aiCfg.model){ aiModelList=[{id:aiCfg.model,label:aiCfg.model+'  (saved)',vision:null}]; aiRenderModels(''); aiEl('ai-model-select').value=aiCfg.model; }
+  else { aiModelList=[]; aiEl('ai-model-wrap').style.display='none'; }
+  if(aiIsReady()) aiStatus('✅ Connected: <b>'+esc(aiProviderLabel(aiCfg.provider))+'</b> · <code>'+esc(aiCfg.model)+'</code>'+(currentUser?(aiTableMissing?' — <span class="warn">saved on this device only: run the updated SQL to sync it to your account</span>':' — saved to your account'):' — saved on this device (sign in to keep it across devices)'),'ok');
+  else aiStatus('Not connected yet. Paste your API key, then press “Connect & fetch models”.','');
+  aiEl('ai-remove-btn').style.display=aiCfg.key?'':'none';
+}
+function aiOnProviderChange(keepKey){
+  var p=aiEl('ai-provider').value;
+  aiEl('ai-base-wrap').style.display=p==='custom'?'':'none';
+  aiEl('ai-key-hint').textContent=(AI_PROVIDERS[p]||{}).hint||'';
+  if(keepKey!==true){aiModelList=[];aiEl('ai-model-wrap').style.display='none';aiStatus('Press “Connect & fetch models”.','');}
+}
+function aiOnKeyInput(){
+  var k=(aiEl('ai-key').value||'').trim(), sel=aiEl('ai-provider'), p=null;
+  if(/^AIza/.test(k)) p='gemini'; else if(/^sk-ant-/.test(k)) p='anthropic'; else if(/^sk-or-/.test(k)) p='openrouter'; else if(/^sk-/.test(k)) p='openai';
+  if(p && sel.value!==p && sel.value!=='custom'){sel.value=p; aiOnProviderChange(true);}
+}
+function aiToggleKey(){var i=aiEl('ai-key'),b=aiEl('ai-key-toggle');var show=i.type==='password';i.type=show?'text':'password';b.textContent=show?'🙈 Hide':'👁 Show';b.setAttribute('aria-pressed',show);}
+function aiRenderModels(filter){
+  var sel=aiEl('ai-model-select'); if(!sel) return; var f=(filter||'').toLowerCase(), cur=sel.value||aiCfg.model;
+  var items=aiModelList.filter(function(m){return !f||m.label.toLowerCase().indexOf(f)>=0;});
+  sel.innerHTML=''; items.slice(0,500).forEach(function(m){var o=document.createElement('option');o.value=m.id;o.textContent=(m.vision===true?'👁 ':m.vision===false?'   ':'')+m.label;sel.appendChild(o);});
+  if(cur&&items.some(function(m){return m.id===cur;})) sel.value=cur;
+  aiEl('ai-model-wrap').style.display='';
+  aiEl('ai-model-count').textContent=aiModelList.length+' model'+(aiModelList.length===1?'':'s')+(items.length!==aiModelList.length?' · '+items.length+' match':'');
+}
+async function aiConnect(){
+  var d=aiDraftCfg(); if(!d.key){aiStatus('Paste your API key first.','err');return;}
+  if(d.provider==='custom'&&!d.base){aiStatus('Enter the base URL for your provider (e.g. https://api.groq.com/openai/v1).','err');return;}
+  var btn=aiEl('ai-connect-btn'); btn.disabled=true; btn.textContent='⏳ Connecting…'; aiStatus('Contacting '+esc(aiProviderLabel(d.provider))+'…','');
+  try{
+    var list=await aiFetchModels(d); aiModelList=list;
+    var keep=(aiCfg.provider===d.provider&&aiCfg.model&&list.some(function(m){return m.id===aiCfg.model;}))?aiCfg.model:'';
+    aiEl('ai-model-search').value=''; aiRenderModels('');
+    aiEl('ai-model-select').value=keep||list[0].id;
+    aiStatus('✅ Key accepted — <b>'+list.length+'</b> models available. Pick the one you want, then press <b>Save</b>.','ok');
+  }catch(e){aiStatus('❌ '+esc(e.message),'err');}
+  btn.disabled=false; btn.textContent='🔌 Connect & fetch models';
+}
+async function aiSaveSettings(){
+  var d=aiDraftCfg();
+  if(!d.key){aiStatus('Paste your API key first.','err');return;}
+  if(!d.model){aiStatus('Press “Connect & fetch models”, then choose a model.','err');return;}
+  aiCfg={provider:d.provider,key:d.key,model:d.model,base:d.base,owner:currentUser?currentUser.id:null};
+  aiSaveLocal(); aiRefreshBadge();
+  var btn=aiEl('ai-save-btn'); btn.disabled=true; btn.textContent='⏳ Saving…';
+  var r=await aiSaveCloud(); btn.disabled=false; btn.textContent='💾 Save';
+  if(r.ok) {aiStatus('✅ Saved to your account — it will be here next time, on any device. <b>'+esc(aiProviderLabel(aiCfg.provider))+'</b> · <code>'+esc(aiCfg.model)+'</code>','ok'); showToast('🤖 AI connection saved','success');}
+  else if(r.reason==='signed-out') {aiStatus('✅ Saved on this device. <b>Sign in</b> (top-right) to also keep it in your account across devices.','ok'); showToast('🤖 AI connection saved on this device','success');}
+  else if(r.reason==='no-table') aiStatus('⚠️ Saved on this device only. The cloud table doesn’t exist yet — run the updated <code>supabase_schema.sql</code> in the Supabase SQL Editor, then press Save again.','warn');
+  else aiStatus('⚠️ Saved on this device, but the cloud save failed: '+esc((r.error&&r.error.message)||'unknown error'),'warn');
+  aiRefreshBadge();
+}
+async function aiTest(){
+  var d=aiDraftCfg(); if(!d.key||!d.model){aiStatus('Connect and choose a model first.','err');return;}
+  var prev=aiCfg; aiCfg=Object.assign({},prev,d); var btn=aiEl('ai-test-btn'); btn.disabled=true; btn.textContent='⏳ Testing…';
+  try{ var t=await aiGenerate({messages:[{role:'user',text:'Reply with the single word: OK'}],maxTokens:40,timeoutMs:45000}); aiStatus('✅ Model replied: <code>'+esc(t.slice(0,60))+'</code> — it works.','ok'); }
+  catch(e){ aiStatus('❌ Test failed: '+esc(e.message),'err'); }
+  aiCfg=prev; btn.disabled=false; btn.textContent='🧪 Test';
+}
+async function aiRemoveKey(){
+  if(!confirm('Remove your saved API key from this device and from your account?')) return;
+  aiClearLocal(); await aiDeleteCloud(); aiModelList=[]; aiEl('ai-key').value=''; aiSettingsRender(); aiRefreshBadge(); showToast('🗑️ API key removed','info');
+}
+function aiRefreshBadge(){
+  var b=aiEl('v4-ai-status'); if(!b) return;
+  b.innerHTML=aiIsReady()?('🟢 '+esc(aiProviderLabel(aiCfg.provider))+' · <code>'+esc(aiCfg.model)+'</code>'):'🔴 Not connected';
+}
+
+// ───────── progress context for the AI coach ─────────
+function aiBuildProgressContext(opts){
+  opts=opts||{}; var budget=opts.maxChars||22000;
+  try{syncStreakDecay();}catch(e){}
+  var today=todayStr(), out=[], all=getAllTopics();
+  var wd=new Date(today+'T00:00:00').toLocaleDateString('en-US',{weekday:'long'});
+  var ec=getExamCountdown(), cap=(state.settings&&state.settings.dailyCapacity)||6;
+  var st=state.studyTimer||{}, sk=state.streak||{};
+  out.push('## STUDENT SNAPSHOT (live data from their MedTrack tracker)');
+  out.push('Today: '+today+' ('+wd+')');
+  out.push(ec?('Exam: "'+ec.name+'" on '+ec.date+' — '+(ec.days>=0?ec.days+' day(s) left':'date has passed')):'Exam: no date set');
+  out.push('Realistic daily capacity: '+cap+' h · Streak: '+(sk.current||0)+' day(s) (best '+(sk.best||0)+') · Studied today: '+fmtHrsMin(st.todayElapsed||0)+' · Total tracked study time: '+fmtHrsMin(st.totalElapsed||0));
+  if(state.whyStarted) out.push('Their own reason for studying medicine: "'+String(state.whyStarted).slice(0,200)+'"');
+
+  var mastered=0,started=0,weak=0,due=0,overdue=0,compSum=0,mcqN=0,mcqSum=0,lowMcq=0;
+  all.forEach(function(x){var t=x.topic,c=getTopicCompletion(t);compSum+=c;
+    if(t.stages.mastered)mastered++; if(c>0)started++; if(t.weakFlag)weak++;
+    if(t.nextReviewDate&&t.nextReviewDate<=today){due++; if(t.nextReviewDate<today)overdue++;}
+    if(t.mcqScore!==null&&t.mcqScore!==undefined){mcqN++;mcqSum+=t.mcqScore;if(t.mcqScore<60)lowMcq++;}});
+  out.push('');
+  out.push('## OVERALL');
+  out.push('Topics: '+all.length+' · started '+started+' · mastered '+mastered+' · untouched '+(all.length-started)+' · avg completion '+(all.length?Math.round(compSum/all.length):0)+'%');
+  out.push('Revision: '+due+' due/overdue ('+overdue+' overdue) · weak-flagged '+weak+' · MCQ avg '+(mcqN?Math.round(mcqSum/mcqN)+'% over '+mcqN+' tested topics':'no MCQ scores yet')+(lowMcq?' · '+lowMcq+' below 60%':''));
+
+  out.push(''); out.push('## SUBJECTS (folder · topics · mastered · avg completion · MCQ avg · due · overdue · weak)');
+  function folderLine(f,ind){
+    var ts=getFolderTopicsRec(f), n=ts.length, m=0,cs=0,qn=0,qs=0,d=0,o=0,w=0;
+    ts.forEach(function(t){cs+=getTopicCompletion(t);if(t.stages.mastered)m++;if(t.mcqScore!==null&&t.mcqScore!==undefined){qn++;qs+=t.mcqScore;}
+      if(t.nextReviewDate&&t.nextReviewDate<=today){d++;if(t.nextReviewDate<today)o++;}if(t.weakFlag)w++;});
+    return ind+'- '+f.name+': '+n+' topics · '+m+' mastered · '+(n?Math.round(cs/n):0)+'% · MCQ '+(qn?Math.round(qs/qn)+'%':'–')+' · due '+d+' · overdue '+o+' · weak '+w;
+  }
+  (state.folders||[]).forEach(function(f){out.push(folderLine(f,'')); (f.subfolders||[]).slice(0,12).forEach(function(sf){out.push(folderLine(sf,'    '));});});
+  if(!(state.folders||[]).length) out.push('(no subjects created yet)');
+
+  // topics, most important first, within the character budget
+  function pathOf(f){var p=[],c=f;while(c){p.unshift(c.name);c=c.parentId?findFolder(c.parentId):null;}return p.join(' > ');}
+  function score(t){var s=0;if(t.weakFlag)s+=50;
+    if(t.nextReviewDate){if(t.nextReviewDate<today)s+=40+Math.min(30,Math.round((new Date(today)-new Date(t.nextReviewDate))/86400000));else if(t.nextReviewDate===today)s+=30;}
+    if(t.mcqScore!==null&&t.mcqScore!==undefined&&t.mcqScore<60)s+=20;
+    var c=getTopicCompletion(t); if(c>0&&!t.stages.mastered)s+=5; if(t.starred)s+=3; if(t.stages.mastered&&!(t.nextReviewDate&&t.nextReviewDate<=today))s-=10; return s;}
+  var ranked=all.slice().sort(function(a,b){return score(b.topic)-score(a.topic);});
+  out.push(''); out.push('## TOPICS — most urgent first. stages = L(ectures) R(eading) N(otes) M(CQ) ✓(mastered); "-" = not done');
+  var listed=0, used=out.join('\n').length;
+  for(var i=0;i<ranked.length;i++){
+    var t=ranked[i].topic, f=ranked[i].folder, S=STAGE_KEYS.map(function(k,ix){return t.stages[k]?'LRNM✓'[ix]:'-';}).join('');
+    var nx=t.nextReviewDate?(t.nextReviewDate<today?'OVERDUE '+Math.round((new Date(today)-new Date(t.nextReviewDate))/86400000)+'d':t.nextReviewDate===today?'due today':'next '+t.nextReviewDate):'not scheduled';
+    var hist=(t.mcqScoreHistory||[]).slice(-3).map(function(h){return h&&h.score!==undefined?h.score:h;}).join('→');
+    var line='- '+pathOf(f)+' :: '+t.name+' ['+S+'] reps '+(t.repetitions||0)+' · '+nx+(t.mcqScore!=null?' · MCQ '+t.mcqScore+'%'+(hist&&hist.indexOf('→')>0?' (trend '+hist+')':''):'')+(t.weakFlag?' · WEAK':'')+(t.starred?' · ★':'')+(t.importance&&t.importance.length?' · '+t.importance.join('/'):'');
+    if(used+line.length>budget*0.8){break;} out.push(line); used+=line.length+1; listed++;
+  }
+  if(listed<ranked.length) out.push('(+'+(ranked.length-listed)+' lower-priority topics not listed — mostly untouched or mastered and not yet due)');
+  if(!all.length) out.push('(no topics yet)');
+
+  // recent activity
+  var hm=state.heatmap||{}, days=[]; for(var d2=13;d2>=0;d2--){var ds=addDays(today,-d2); days.push(ds.slice(5)+':'+(hm[ds]||0));}
+  out.push(''); out.push('## LAST 14 DAYS — study actions logged per day'); out.push(days.join('  '));
+  var dv=state.v4Diary||{}, dkeys=Object.keys(dv).sort().slice(-7);
+  if(dkeys.length){ out.push(''); out.push('## DIARY (last days with entries)');
+    dkeys.forEach(function(k){var d=dv[k]||{},ts=d.tasks||[],done=ts.filter(function(t){return t.completed;}).length,r=d.reflection||{};
+      var extra=[]; if(r.accomplished)extra.push('did: '+String(r.accomplished).slice(0,90)); if(r.struggled)extra.push('struggled: '+String(r.struggled).slice(0,90));
+      out.push('- '+k+(d.title?' "'+d.title+'"':'')+': '+done+'/'+ts.length+' tasks done'+(r.energy!==undefined&&(r.accomplished||r.struggled)?' · energy '+r.energy+'/10 focus '+r.focus+'/10':'')+(extra.length?' · '+extra.join(' · '):''));});
+    var td=dv[today]; if(td&&td.tasks&&td.tasks.length){ out.push("Today's plan: "+td.tasks.map(function(t){return (t.time?t.time+' ':'')+t.title+(t.completed?' ✓':'');}).join(' | ').slice(0,900)); }
+  }
+  var open=(state.plannerTasks||[]).filter(function(t){return !t.done;}); if(open.length) out.push('Open planner tasks: '+open.slice(0,10).map(function(t){return t.text||t.title||'';}).join(' | ').slice(0,400));
+
+  // other modules (Books / Growth / Tech): counts only
+  var ms=[]; ['books','personality','tech'].forEach(function(mid){try{var m=getModuleState(mid),n=0,dd=0;
+    (function walk(fs){fs.forEach(function(f){(f.nodes||[]).forEach(function(nd){n++;if(nd.nextReviewDate&&nd.nextReviewDate<=today)dd++;});walk(f.subfolders||[]);});})(m.folders||[]);
+    if(n) ms.push((MODULE_DEFS[mid]?MODULE_DEFS[mid].label:mid)+': '+n+' items, '+dd+' due');}catch(e){}});
+  if(ms.length){out.push(''); out.push('## OTHER LEARNING MODULES'); out.push(ms.join(' · '));}
+  return out.join('\n');
+}
+function aiCoachSystemPrompt(){
+  return 'You are MedTrack AI, a personal medical-education coach for an MBBS student whose goal is to excel — exam-ready and clinically excellent. '+
+  'Below is their LIVE progress data from their tracker. Use it:\n'+
+  '• Ground every recommendation in specific topics/numbers from the data. Never invent progress that is not there; if something you need is missing, say so and ask ONE short question.\n'+
+  '• Prioritise overdue and weak topics, low MCQ scores and spaced-repetition due items before new material; respect their daily capacity and exam date.\n'+
+  '• Apply evidence-based learning: active recall, interleaving, spaced repetition, desirable difficulty, sleep/consolidation.\n'+
+  '• Be specific and actionable (what to do, in what order, for how long). Use short bullets; stay concise unless they ask for depth. Be encouraging but honest about gaps.\n'+
+  '• Keep medical content accurate; flag uncertainty and suggest verifying against their textbook/lecturers. You are a study coach, not a clinician giving patient advice.\n'+
+  '• If they ask for a day schedule, give a time-blocked list; they can also use 📅 Schedule to import a full plan.\n\n'+
+  aiBuildProgressContext();
+}
+
+// ───────── AI chat ─────────
+function aiMd(t){
+  var h=esc(t);
+  h=h.replace(/```([\s\S]*?)```/g,function(_,c){return '<pre>'+c.replace(/^\w*\n/,'')+'</pre>';});
+  h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');
+  h=h.replace(/^#{1,4}\s*(.+)$/gm,'<b>$1</b>');
+  h=h.replace(/^(?:[-*•]\s+.+(?:\n|$))+/gm,function(block){return '<ul>'+block.trim().split('\n').map(function(l){return '<li>'+l.replace(/^[-*•]\s+/,'')+'</li>';}).join('')+'</ul>';});
+  return h.replace(/\n/g,'<br>').replace(/<br>(<\/?(ul|pre))/g,'$1').replace(/(<\/(ul|pre)>)<br>/g,'$1');
+}
+async function aiChatSend(){
+  if(aiChatBusy) return;
+  var inp=aiEl('v4-ai-input'); if(!inp) return; var msg=inp.value.trim(); if(!msg) return; inp.value='';
+  v4AppendAiMsg('u','👤 You',msg);
+  var chat=aiEl('v4-ai-chat');
+  if(!aiIsReady()){
+    var n=document.createElement('div'); n.className='ai-msg';
+    n.innerHTML='<div class="ai-msg-role a">🧠 MedTrack AI</div><div class="ai-msg-body">To chat, connect your own AI API key first (Gemini, OpenAI, Claude, OpenRouter…).<br><br><button class="btn btn-primary btn-sm" onclick="v4CloseAi();openSettingsPanel()">⚙️ Open AI settings</button></div>';
+    chat.appendChild(n); chat.scrollTop=chat.scrollHeight; return;
+  }
+  aiChatBusy=true; var btn=aiEl('v4-ai-send'); if(btn){btn.disabled=true;btn.textContent='…';}
+  v4AiMsgs.push({role:'user',content:msg});
+  var el=document.createElement('div'); el.className='ai-msg'; el.innerHTML='<div class="ai-msg-role a">🧠 MedTrack AI</div><div class="ai-msg-body">⏳ Reviewing your progress…</div>';
+  chat.appendChild(el); chat.scrollTop=chat.scrollHeight;
+  try{
+    var text=await aiGenerate({system:aiCoachSystemPrompt(),maxTokens:2500,
+      messages:v4AiMsgs.slice(-12).map(function(m){return {role:m.role,text:m.content};})});
+    v4AiMsgs.push({role:'assistant',content:text});
+    el.querySelector('.ai-msg-body').innerHTML=aiMd(text);
+  }catch(e){
+    v4AiMsgs.pop();
+    el.querySelector('.ai-msg-body').innerHTML='⚠️ '+esc(e.message)+'<br><br><button class="btn btn-secondary btn-sm" onclick="v4CloseAi();openSettingsPanel()">⚙️ Check AI settings</button>';
+  }
+  aiChatBusy=false; if(btn){btn.disabled=false;btn.textContent='Send';} chat.scrollTop=chat.scrollHeight;
+}
+function aiClearChat(){v4AiMsgs.length=0; var c=aiEl('v4-ai-chat'); if(c) c.innerHTML='<div class="ai-msg"><div class="ai-msg-role a">🧠 MedTrack AI</div><div class="ai-msg-body">Chat cleared. I still have your live progress — ask me anything.</div></div>';}
+
+// ───────── Schedule: OCR a timetable photo ─────────
+var ocrImages=[]; var OCR_MAX_IMAGES=6, OCR_MAX_SIDE=2000;
+function aiPrepImage(file){
+  return new Promise(function(resolve,reject){
+    var url=URL.createObjectURL(file), img=new Image();
+    img.onload=function(){
+      var s=Math.min(1,OCR_MAX_SIDE/Math.max(img.width,img.height)), w=Math.max(1,Math.round(img.width*s)), h=Math.max(1,Math.round(img.height*s));
+      var c=document.createElement('canvas'); c.width=w; c.height=h; var x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,w,h); x.drawImage(img,0,0,w,h);
+      var data=c.toDataURL('image/jpeg',0.88); URL.revokeObjectURL(url);
+      resolve({mime:'image/jpeg',b64:data.split(',')[1],thumb:data});
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);reject(new Error('Could not read this image.'));};
+    img.src=url;
+  });
+}
+async function schedOcrAddFiles(files){
+  var list=Array.prototype.slice.call(files||[]).filter(function(f){return /^image\//.test(f.type);});
+  if(!list.length){showToast('Please choose an image (PNG, JPG, WEBP…)','warn');return;}
+  for(var i=0;i<list.length;i++){
+    if(ocrImages.length>=OCR_MAX_IMAGES){showToast('Up to '+OCR_MAX_IMAGES+' images at a time','warn');break;}
+    try{ocrImages.push(await aiPrepImage(list[i]));}catch(e){showToast(e.message,'error');}
+  }
+  schedOcrRender();
+}
+function schedOcrRender(){
+  var box=aiEl('sched-ocr-thumbs'); if(!box) return;
+  box.innerHTML=ocrImages.map(function(im,i){return '<div class="ocr-thumb"><img src="'+im.thumb+'" alt="Timetable image '+(i+1)+'"><button type="button" onclick="schedOcrRemove('+i+')" aria-label="Remove image '+(i+1)+'">✕</button></div>';}).join('');
+  var b=aiEl('sched-ocr-run'); if(b) b.disabled=!ocrImages.length;
+}
+function schedOcrRemove(i){ocrImages.splice(i,1);schedOcrRender();}
+function schedOcrReset(){ocrImages=[];schedOcrRender();var n=aiEl('sched-ocr-notes');if(n)n.value='';var s=aiEl('sched-ocr-status');if(s){s.textContent='';s.className='ai-status';}
+  var d=aiEl('sched-ocr-date');if(d)d.value=todayStr();var f=aiEl('sched-ocr-fill');if(f)f.checked=false;aiOcrRefreshNote();}
+function aiOcrRefreshNote(){var n=aiEl('sched-ocr-conn');if(!n)return;
+  n.innerHTML=aiIsReady()?('Using 🟢 <b>'+esc(aiProviderLabel(aiCfg.provider))+'</b> · <code>'+esc(aiCfg.model)+'</code> <a href="#" onclick="closeScheduleImport();openSettingsPanel();return false">change</a>'):('🔴 No AI connected. <a href="#" onclick="closeScheduleImport();openSettingsPanel();return false">Add your API key in Settings</a> — or use the copy-prompt / JSON steps (no API needed).');}
+function aiExtractJson(text){
+  var t=String(text||'').replace(/```(?:json)?/gi,'').trim(), a=t.indexOf('{'), b=t.lastIndexOf('}');
+  if(a<0||b<=a) throw new Error('The AI did not return JSON.');
+  return JSON.parse(t.slice(a,b+1));
+}
+function aiBuildOcrPrompt(dateStr,notes,fill){
+  var wd=new Date(dateStr+'T00:00:00').toLocaleDateString('en-US',{weekday:'long'});
+  var struct=''; try{struct=buildFolderStructureText(state.folders,0).trim();}catch(e){} if(struct.length>9000) struct=struct.slice(0,9000)+'\n… (truncated)';
+  var cap=(state.settings&&state.settings.dailyCapacity)||6, extra='';
+  if(fill){
+    var pri=getPrioritizedDueTopics();
+    extra='FILL THE GAPS: after transcribing every fixed session, ALSO fill the free time between them with revision slots (types active-recall / mcq / revise / learn) chosen from my due and weak topics below — most urgent first, interleave subjects, add short breaks, and never exceed '+cap+' total study hours across non-break, non-class slots.\n'+
+    'MOST URGENT TOPICS (reuse their exact names + topicId):\n'+(pri.today.slice(0,25).map(function(x){return '  - '+x.topic.name+' [id:'+x.topic.id+'] ('+x.folder.name+')'+(x.topic.weakFlag?' ⚠weak':'');}).join('\n')||'  (none due)')+'\n\n';
+  } else extra='Do NOT add study sessions of your own — include only what is in the image (plus anything my notes explicitly ask for).\n\n';
+  return 'You are reading a photo/screenshot of a student\'s TIMETABLE (classes, lectures, labs, tutorials). Transcribe it precisely into MedTrack Pro\'s daily-schedule JSON.\n\n'+
+  'TARGET DATE: '+dateStr+' ('+wd+'). If the image is a weekly/multi-day grid, extract ONLY the entries for '+wd+'. If it shows a single day, use all of it.\n\n'+
+  'RULES\n'+
+  '1. OCR carefully. Keep every time range as printed, written in 24-hour "HH:MM - HH:MM". Never invent sessions that are not in the image. If something is unreadable, still add the slot and say "unclear in image" in notes instead of guessing silently.\n'+
+  '2. subject = the course/department printed in the image. topic = the specific lecture/topic title if printed, otherwise "<subject> lecture/practical/tutorial".\n'+
+  '3. type: "lectures" for classes, lectures, practicals, labs, tutorials; "break" for breaks, prayer, lunch; otherwise one of learn | revise | active-recall | mcq | clinical.\n'+
+  '4. Reuse existing material: if a subject matches an existing folder below use that EXACT folder name; if a topic matches an existing topic use its EXACT name and put its id in "topicId". Never create near-duplicates.\n'+
+  '5. Put anything useful printed in the image (room, lecturer, "bring X", compulsory) into notes.\n'+
+  '6. Every slot needs: id (unique slug), time, subject, topic, type, emoji, tags, difficulty (light|moderate|deep), notes, microSteps (2-4 short concrete checkable sub-tasks).\n\n'+
+  (notes?'IMPORTANT THINGS THE STUDENT SAYS YOU MUST KNOW — respect them (adjust slots/notes, add what they ask for):\n'+notes+'\n\n':'')+
+  extra+
+  'EXISTING FOLDER/TOPIC STRUCTURE (exact names + ids):\n'+(struct||'(none yet — create sensible new subject names)')+'\n\n'+
+  'OUTPUT — ONLY valid JSON, no markdown fences, no commentary:\n'+
+  '{"date":"'+dateStr+'","dayTitle":"short meaningful title","schedule":[{"id":"slug","time":"08:00 - 09:00","subject":"","topic":"","topicId":"only if it already exists","type":"lectures","emoji":"🧬","tags":[],"difficulty":"moderate","notes":"","microSteps":["",""]}]}';
+}
+async function schedOcrRun(){
+  var st=aiEl('sched-ocr-status'), btn=aiEl('sched-ocr-run');
+  if(!aiIsReady()){aiOcrRefreshNote();if(st){st.className='ai-status err';st.textContent='Connect your AI API in Settings first.';}return;}
+  if(!ocrImages.length){if(st){st.className='ai-status err';st.textContent='Add at least one timetable image.';}return;}
+  var date=(aiEl('sched-ocr-date').value||todayStr()), notes=(aiEl('sched-ocr-notes').value||'').trim(), fill=!!aiEl('sched-ocr-fill').checked;
+  btn.disabled=true; btn.textContent='⏳ Reading timetable…'; if(st){st.className='ai-status';st.textContent='Sending '+ocrImages.length+' image(s) to '+aiProviderLabel(aiCfg.provider)+'…';}
+  try{
+    var txt=await aiGenerate({json:true,maxTokens:8192,timeoutMs:180000,
+      messages:[{role:'user',text:aiBuildOcrPrompt(date,notes,fill),images:ocrImages.map(function(i){return {mime:i.mime,b64:i.b64};})}]});
+    var data=aiExtractJson(txt);
+    if(!data.schedule||!Array.isArray(data.schedule)||!data.schedule.length) throw new Error('No sessions were found in the image. Try a clearer/cropped photo, or check the target date.');
+    data.date=date; var seen={};
+    data.schedule.forEach(function(s,i){var id=String(s.id||('ocr-'+(i+1))); while(seen[id])id+='-'+i; seen[id]=1; s.id=id; if(Array.isArray(s.microSteps)===false) delete s.microSteps;});
+    var pa=aiEl('sched-paste-area'); pa.value=JSON.stringify(data,null,2); handleSchedPaste(pa.value);
+    if(st){st.className='ai-status ok';st.textContent='✅ Found '+data.schedule.length+' slots. Review the preview below, then press “Load Schedule”.';}
+    var pv=aiEl('sched-preview-area'); if(pv&&pv.scrollIntoView) pv.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }catch(e){ if(st){st.className='ai-status err';st.textContent='❌ '+e.message+(/json/i.test(e.message)?' (try a model with vision support, marked 👁 in the model list)':'');} }
+  btn.disabled=!ocrImages.length; btn.textContent='✨ Extract schedule with AI';
+}
+document.addEventListener('paste',function(e){
+  var ov=aiEl('schedule-import-overlay'); if(!ov||!ov.classList.contains('show')) return;
+  var items=(e.clipboardData&&e.clipboardData.items)||[], files=[];
+  for(var i=0;i<items.length;i++){if(items[i].kind==='file'&&/^image\//.test(items[i].type)){var f=items[i].getAsFile();if(f)files.push(f);}}
+  if(files.length){e.preventDefault();schedOcrAddFiles(files);showToast('📷 Image pasted','success');}
+});
+(function(){var _open=openScheduleImport; openScheduleImport=function(){_open.apply(this,arguments);schedOcrReset();};
+  var _openS=openSettingsPanel; openSettingsPanel=function(){_openS.apply(this,arguments);aiSettingsRender();};
+  var _o2=v4OpenAi; v4OpenAi=function(){_o2.apply(this,arguments);aiRefreshBadge();};})();
+aiLoadLocal();
+(function(){function init(){aiRefreshBadge();} if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();
+// ═══════════════════════════════════════════════════════════════════════════
+//  (1) Schedule: generate the plan directly with the user's AI (the copy-prompt route still works)
+// ═══════════════════════════════════════════════════════════════════════════
+function aiScheduleQualityBar(){
+  return '\n\n════════ QUALITY BAR — this plan is generated directly for me, so be exhaustive and precise ════════\n'+
+  '• HAND-PICK, don\'t pad: choose the topics with the highest exam yield AND the greatest forgetting risk first — overdue, weak-flagged, low MCQ score, high importance/weightage. Say why-now in one line at the start of each slot\'s "notes".\n'+
+  '• COVER EVERY CONCEPT & FACT: for each learn/revise slot, "notes" = 2-4 sentences of the high-yield core (key mechanism or definition, classification, normal values/numbers, eponyms, drug/dose where relevant, and the classic exam/viva traps). "microSteps" = 4-7 concrete, checkable items that each NAME a specific concept or fact to retrieve or produce (e.g. "Recall the 3 layers of the glomerular filtration barrier and what each excludes", "Draw the brachial plexus from memory, then mark the Erb vs Klumpke lesions") — never vague verbs like "review chapter".\n'+
+  '• NOTHING LEFT OUT: if a topic is large, split it across slots by sub-concept (e.g. "GFR — determinants", "GFR — measurement & clearance", "GFR — autoregulation") so every standard sub-concept for that topic is covered somewhere in the day.\n'+
+  '• ACCURACY FIRST: state only standard, textbook-level facts you are confident about. If unsure of a value, turn it into a recall task instead of asserting a number. Never fabricate.\n'+
+  '• Every major study block ends with an active-recall or MCQ slot whose microSteps name what to test (e.g. "10 MCQs on X, focusing on Y vs Z").\n'+
+  '• For genuinely new topics add "importance": a short array of tags such as ["high-yield","viva","clinical"]. Keep to the JSON schema above exactly; aim for roughly 8-16 slots in total.';
+}
+async function schedAiGenerate(){
+  var st=aiEl('sched-gen-status'), btn=aiEl('sched-gen-btn');
+  function say(t,c){if(st){st.className='ai-status '+(c||'');st.textContent=t;}}
+  if(!aiIsReady()){say('Connect your AI API in ⚙️ Settings first (or use the Copy Prompt route).','err');aiOcrRefreshNote();return;}
+  var prompt=buildScheduleAIPrompt()+aiScheduleQualityBar();
+  btn.disabled=true; btn.textContent='⏳ Designing your day…'; say('Asking '+aiProviderLabel(aiCfg.provider)+' · '+aiCfg.model+' — this can take up to a minute…','');
+  try{
+    var txt=await aiGenerate({json:true,maxTokens:12000,timeoutMs:240000,messages:[{role:'user',text:prompt}]}), data;
+    try{data=aiExtractJson(txt);}
+    catch(e1){
+      say('Tidying the answer…','');
+      var fixed=await aiGenerate({json:true,maxTokens:12000,timeoutMs:240000,messages:[{role:'user',text:prompt},{role:'assistant',text:txt},{role:'user',text:'That was not valid JSON. Reply with ONLY the complete corrected JSON object — no commentary, no code fences.'}]});
+      data=aiExtractJson(fixed);
+    }
+    if(!data.schedule||!Array.isArray(data.schedule)||!data.schedule.length) throw new Error('The AI returned no sessions. Try again, or choose a stronger model in Settings.');
+    if(!data.date) data.date=todayStr();
+    var seen={}; data.schedule.forEach(function(s,i){var id=String(s.id||('ai-'+(i+1)));while(seen[id])id+='-'+i;seen[id]=1;s.id=id;if(!Array.isArray(s.microSteps))delete s.microSteps;});
+    var pa=aiEl('sched-paste-area'); pa.value=JSON.stringify(data,null,2); handleSchedPaste(pa.value);
+    say('✅ '+data.schedule.length+' slots generated from your live progress. Review the preview below, then press “Load Schedule”.','ok');
+    var pv=aiEl('sched-preview-area'); if(pv&&pv.scrollIntoView) pv.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }catch(e){say('❌ '+e.message,'err');}
+  btn.disabled=false; btn.textContent='✨ Generate with my AI';
+}
+(function(){var _o=aiOcrRefreshNote; aiOcrRefreshNote=function(){_o.apply(this,arguments);
+  var b=aiEl('sched-gen-note'); if(b) b.innerHTML=aiIsReady()?('Using 🟢 <b>'+esc(aiProviderLabel(aiCfg.provider))+'</b> · <code>'+esc(aiCfg.model)+'</code>'):'🔴 No AI connected — use <b>Copy AI Prompt</b>, or <a href="#" onclick="closeScheduleImport();openSettingsPanel();return false">add your API key</a>.';};
+  var _r=schedOcrReset; schedOcrReset=function(){_r.apply(this,arguments);var s=aiEl('sched-gen-status');if(s){s.textContent='';s.className='ai-status';}};})();
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  (2) Important links box + "quick check" timer (look at the feed, then get back to work)
+//  Stored in app state (syncs with the rest of the data). The timer opens the link in a tab this app
+//  controls, and closes that tab when time is up (browsers only allow closing tabs a page itself opened).
+// ═══════════════════════════════════════════════════════════════════════════
+var QL_PLATFORMS=[[/facebook\.com|fb\.com|fb\.me/,'📘'],[/instagram\.com/,'📸'],[/(^|\.)x\.com|twitter\.com/,'𝕏'],[/youtube\.com|youtu\.be/,'▶️'],[/whatsapp\.com|wa\.me/,'💬'],[/t\.me|telegram/,'✈️'],[/linkedin\.com/,'💼'],[/reddit\.com/,'👽'],[/tiktok\.com/,'🎵'],[/discord/,'🎮'],[/snapchat/,'👻'],[/pinterest/,'📌'],[/threads\.net/,'🧵']];
+var qlEditId=null, qcSession=null;
+function qlNormUrl(u){
+  u=String(u||'').trim(); if(!u||/\s/.test(u)) return '';
+  if(/^https?:\/\//i.test(u)){}                              // already http(s)
+  else if(/^[a-z][a-z0-9+.-]*:(?!\d)/i.test(u)) return '';     // javascript:, data:, mailto: … → refuse ("host:8080" is fine)
+  else u='https://'+u.replace(/^\/\//,'');
+  try{var x=new URL(u); if(x.protocol!=='http:'&&x.protocol!=='https:') return ''; return x.href;}catch(e){return '';}
+}
+function qlHost(u){try{return new URL(u).hostname.replace(/^www\./,'');}catch(e){return '';}}
+function qlIcon(u){var h=qlHost(u);for(var i=0;i<QL_PLATFORMS.length;i++){if(QL_PLATFORMS[i][0].test(h))return QL_PLATFORMS[i][1];}return '🔗';}
+function qlList(){state.importantLinks=Array.isArray(state.importantLinks)?state.importantLinks:[];return state.importantLinks;}
+function qlMinutes(){var m=parseInt(state.settings&&state.settings.quickCheckMin,10);return [1,2,3,5,10,15].indexOf(m)>=0?m:3;}
+function qlSetMinutes(v){state.settings=state.settings||{};state.settings.quickCheckMin=parseInt(v,10)||3;saveState();renderQuickLinks();}
+function qlTodayLog(){state.quickCheckLog=state.quickCheckLog||{};var t=todayStr();return state.quickCheckLog[t]||(state.quickCheckLog[t]={n:0,sec:0});}
+function renderQuickLinks(){
+  var box=aiEl('quick-links-list'); if(!box) return;
+  var links=qlList();
+  box.innerHTML=links.length?links.map(function(l){
+    return '<div class="ql-item"><button type="button" class="ql-open" onclick="qlOpen(\''+l.id+'\')" title="Open for a '+qlMinutes()+'-minute quick check">'+
+      '<span class="ql-ic" aria-hidden="true">'+qlIcon(l.url)+'</span><span class="ql-txt"><b>'+esc(l.label)+'</b><small>'+esc(qlHost(l.url))+'</small></span></button>'+
+      '<button type="button" class="ql-mini" onclick="qlEdit(\''+l.id+'\')" aria-label="Edit '+esc(l.label)+'">✎</button>'+
+      '<button type="button" class="ql-mini" onclick="qlDelete(\''+l.id+'\')" aria-label="Remove '+esc(l.label)+'">✕</button></div>';
+  }).join(''):'<div class="ql-empty">Add the few pages you really need (class group, faculty channel, notices) — go straight to them instead of the feed.</div>';
+  var sel=aiEl('ql-minutes'); if(sel) sel.value=String(qlMinutes()); var ac=aiEl('ql-autoclose'); if(ac) ac.checked=qlAutoClose();
+  var lg=(state.quickCheckLog||{})[todayStr()], el=aiEl('ql-today');
+  if(el) el.textContent=lg&&lg.n?('Today: '+lg.n+' quick check'+(lg.n>1?'s':'')+' · '+fmtHrsMin(lg.sec||0)):'No quick checks today 👍';
+  var b=aiEl('ql-save-btn'); if(b) b.textContent=qlEditId?'💾 Update':'+ Add';
+  var c=aiEl('ql-cancel-btn'); if(c) c.style.display=qlEditId?'':'none';
+}
+function qlSave(){
+  var u=qlNormUrl(aiEl('ql-url').value), name=(aiEl('ql-label').value||'').trim();
+  if(!u){showToast('Enter a valid link (https://…)','warn');aiEl('ql-url').focus();return;}
+  if(!name) name=qlHost(u);
+  var links=qlList();
+  if(qlEditId){var l=links.find(function(x){return x.id===qlEditId;});if(l){l.label=name;l.url=u;}}
+  else links.push({id:genId(),label:name,url:u});
+  qlEditId=null; aiEl('ql-url').value=''; aiEl('ql-label').value=''; saveState(); renderQuickLinks();
+}
+function qlEdit(id){var l=qlList().find(function(x){return x.id===id;});if(!l)return;qlEditId=id;aiEl('ql-url').value=l.url;aiEl('ql-label').value=l.label;renderQuickLinks();aiEl('ql-url').focus();}
+function qlCancelEdit(){qlEditId=null;aiEl('ql-url').value='';aiEl('ql-label').value='';renderQuickLinks();}
+function qlDelete(id){var l=qlList().find(function(x){return x.id===id;});if(!l||!confirm('Remove “'+l.label+'”?'))return;state.importantLinks=qlList().filter(function(x){return x.id!==id;});saveState();renderQuickLinks();}
+
+// --- quick-check timer ---
+function qcBeep(){try{var C=window.AudioContext||window.webkitAudioContext;if(!C)return;var a=new C(),o=a.createOscillator(),g=a.createGain();o.frequency.value=880;g.gain.value=.08;o.connect(g);g.connect(a.destination);o.start();setTimeout(function(){o.stop();a.close();},350);}catch(e){}}
+function qlAutoClose(){return !(state.settings&&state.settings.quickCheckAutoClose===false);}
+function qlSetAutoClose(on){state.settings=state.settings||{};state.settings.quickCheckAutoClose=!!on;saveState();renderQuickLinks();}
+function qlOpen(id){
+  var l=qlList().find(function(x){return x.id===id;}); if(!l) return;
+  if(qcSession){showToast('Finish your current quick check first 🙂','warn');return;}
+  var w=null;
+  if(qlAutoClose()){
+    // Keep a handle to the new tab so MedTrack can close it when time is up. (Browsers only allow closing tabs a page opened itself;
+    // the trade-off is that this link can reach back to this tab — fine for your own trusted links; switch it off below if not.)
+    try{w=window.open(l.url,'_blank');}catch(e){w=null;}
+    if(!w){showToast('Pop-up blocked — allow pop-ups for this site to use quick checks','warn');return;}
+  } else {
+    var a=document.createElement('a'); a.href=l.url; a.target='_blank'; a.rel='noopener noreferrer'; document.body.appendChild(a); a.click(); a.remove();
+  }
+  qcSession={id:id,label:l.label,win:w,start:Date.now(),end:Date.now()+qlMinutes()*60000,title:document.title,beeped:false};
+  qcSession.timer=setInterval(qcTick,500); qcRenderChip();
+}
+function qcRemaining(){return Math.max(0,Math.ceil((qcSession.end-Date.now())/1000));}
+function qcTick(){
+  if(!qcSession) return;
+  var rem=qcRemaining(), closed=false; if(qcSession.win){try{closed=qcSession.win.closed;}catch(e){}}
+  if(closed){qcFinish('closed');return;}
+  if(rem<=0 && !qcSession.beeped){
+    qcSession.beeped=true; qcBeep();
+    if(qcSession.win){
+      try{qcSession.win.close();}catch(e){}
+      var stillOpen=false;try{stillOpen=!qcSession.win.closed;}catch(e){}
+      if(!stillOpen){qcFinish('timeout');return;}
+    }
+    document.title='⏰ Time\'s up — close the tab!';
+  }
+  qcRenderChip();
+}
+function qcFinish(why){
+  if(!qcSession) return; clearInterval(qcSession.timer);
+  var sec=Math.round((Date.now()-qcSession.start)/1000), lg=qlTodayLog(); lg.n++; lg.sec+=sec;
+  document.title=qcSession.title; var label=qcSession.label; qcSession=null; saveState();
+  var chip=aiEl('qc-chip'); if(chip) chip.classList.remove('show');
+  renderQuickLinks();
+  showToast(why==='timeout'?('⏰ '+label+' check done ('+fmtHrsMin(sec)+') — tab closed. Back to studying!'):('✅ Welcome back — '+label+' check took '+fmtHrsMin(sec)+'.'),'success');
+}
+function qcExtend(){if(qcSession){qcSession.end+=2*60000;qcSession.beeped=false;document.title=qcSession.title;qcRenderChip();}}
+function qcDone(){
+  if(!qcSession) return;
+  if(qcSession.win){
+    try{qcSession.win.close();}catch(e){}
+    var stillOpen=false;try{stillOpen=!qcSession.win.closed;}catch(e){}
+    if(stillOpen) showToast('Your browser kept that tab open — please close it yourself ✋','warn');
+  }
+  qcFinish('closed');
+}
+function qcRenderChip(){
+  var chip=aiEl('qc-chip'); if(!chip||!qcSession) return;
+  var rem=qcRemaining(), m=Math.floor(rem/60), s=rem%60;
+  chip.classList.add('show'); chip.classList.toggle('late',rem<=0);
+  aiEl('qc-label').textContent=qcSession.label;
+  aiEl('qc-time').textContent=rem>0?(m+':'+String(s).padStart(2,'0')):'Time\'s up!';
+}
+window.addEventListener('beforeunload',function(){if(qcSession&&qcSession.win){try{qcSession.win.close();}catch(e){}}});
+(function(){var _rh=renderHome; renderHome=function(){_rh.apply(this,arguments);try{renderQuickLinks();}catch(e){}};
+  function init(){try{renderQuickLinks();}catch(e){}} if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();
+
 </script>
 </body>
 </html>
